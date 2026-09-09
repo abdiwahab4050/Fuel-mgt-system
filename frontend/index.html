@@ -1,0 +1,601 @@
+<!-- DOCTYPE & HTML ROOT: Document type and root element with language/theme class -->
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <!-- HEAD META: Page charset, viewport, and browser tab title -->
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Star Fuel Station - Home</title>
+  <!-- EXTERNAL CDN LINKS: Tailwind CSS and Google Fonts (Material Symbols, Inter) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- CUSTOM STYLESHEET: Project-wide CSS from css/styles.css -->
+  <link rel="stylesheet" href="css/styles.css"/>
+  <!-- CUSTOM INLINE STYLES: Page-specific CSS (e.g. tracking stepper lines) -->
+  <style>
+    .stepper-line {
+      height: 2px;
+      background: #c0c8cb;
+      flex-grow: 1;
+      margin: 0 8px;
+    }
+    .stepper-line.active {
+      background: #3a6470;
+    }
+  </style>
+  <!-- TAILWIND CONFIG: Theme colors, fonts, and dark mode settings -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            outline: '#71787b',
+            'outline-variant': '#c0c8cb',
+            background: '#f8f9ff',
+            surface: '#f8f9ff',
+            'surface-container-low': '#eff4ff',
+            'surface-container': '#e5eeff',
+            'surface-container-highest': '#d3e4fe',
+            'surface-dim': '#cbdbf5',
+            primary: '#3a6470',
+            'primary-container': '#add8e6',
+            'on-primary-container': '#355f6b',
+            'on-surface': '#0b1c30',
+            'on-surface-variant': '#41484a',
+            'on-primary': '#ffffff'
+          },
+          fontFamily: { body: ['Inter', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+</head>
+<!-- BODY: Main page wrapper with background and typography classes -->
+<body class="bg-background text-on-surface font-body">
+  <!-- TOP CONTACT BAR: Phone, email, and address strip above the header -->
+  <div class="bg-primary text-on-primary flex justify-center items-center w-full px-4 text-center h-8 text-xs">
+    Phone: 252 63 7607576 | Email: starfuelstation@gmail.com | Address: Hargeisa, Star Business Center
+  </div>
+
+  <!-- HEADER & NAV: Logo, navigation links, cart button, and login button -->
+  <header class="sticky top-0 z-50 bg-surface border-b border-outline-variant shadow-sm">
+    <nav class="flex items-center justify-between w-full px-4 md:px-8 py-3 max-w-[1280px] mx-auto h-16">
+      <a href="#home" class="text-xl font-bold text-primary">Star Fuel Station</a>
+      <div class="hidden md:flex items-center space-x-6 text-sm font-semibold">
+        <a class="nav-link text-primary border-b-2 border-primary pb-1" href="#home">Home</a>
+        <a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#products">Products</a>
+        <a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#tracking">Tracking Orders</a>
+        <a class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#about">About Us</a>
+        <a id="contact-nav-link" class="nav-link text-on-surface-variant hover:text-primary transition-colors" href="#contact">Contact Us</a>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="cart-btn" class="relative text-on-surface-variant hover:text-primary transition-all" aria-label="Open shopping cart">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span id="cart-count" class="hidden absolute -top-2 -right-2 bg-primary text-white text-[10px] rounded-full w-4 h-4 items-center justify-center">0</span>
+        </button>
+        <button id="open-login-btn" class="bg-primary-container text-on-primary-container px-4 py-2 rounded font-semibold text-sm hover:opacity-90 transition-all">
+          Login
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- MAIN: Primary page content sections (hero through contact) -->
+  <main>
+    <!-- HERO SECTION: Banner image, headline, tagline, and call-to-action buttons -->
+    <section id="home" class="relative h-[600px] flex items-center overflow-hidden">
+      <div class="absolute inset-0 z-0">
+        <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7AlbHMUITsgfWciP24BTggazVbt9eDhf-89Wv7fe7CMz8cAlcQK106QDwyp4SiQ1pl7skdnecBowm1n21rV0AAz-XFxl2pNek5QOWylqUd4mTJywRMImei_rjWNT7e5weK_IpWxJH1oU5drUC4ZiweGKKBwb-mWRWyoTG7XXVCQLNBu6LWved7ih2JL-1cnC7x1stgTYhQQUGDOs2fg-y2fxBNa1S1V9NbJmp1I-dOxYEGZ9lsS2OQMdOiQ0ZEjYQYJ2qsH7iber-" alt="Modern fuel station"/>
+        <div class="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent"></div>
+      </div>
+      <div class="relative z-10 w-full max-w-[1280px] mx-auto px-4 md:px-8">
+        <div class="max-w-2xl space-y-4">
+          <span class="inline-block px-3 py-1 bg-primary-container/40 text-primary font-semibold text-sm rounded-full">Premium Energy Solutions</span>
+          <h1 class="text-4xl md:text-6xl font-bold text-on-surface">Fuel Your <br/><span class="text-primary">Journey</span></h1>
+          <p class="text-lg text-on-surface-variant">Experience the gold standard in fuel logistics and vehicle care. We provide precision-refined energy to keep you moving.</p>
+          <div class="flex space-x-4 pt-2">
+            <a href="#products" class="bg-primary text-on-primary px-6 py-3 rounded font-semibold hover:shadow-lg transition-all">Explore Products</a>
+            <a href="#about" class="border-2 border-primary text-primary px-6 py-3 rounded font-semibold hover:bg-surface-container-low transition-all">About Us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  
+
+    <!-- PRODUCTS SECTION: Section heading and product grid container (populated by JS) -->
+    <section id="products" class="py-16 bg-background">
+      <div class="max-w-[1280px] mx-auto px-4 md:px-8">
+        <div class="flex justify-between items-end mb-8">
+          <div class="space-y-1">
+            <h2 class="text-3xl font-bold">Our Products</h2>
+            <p class="text-on-surface-variant">High-performance energy for every vehicle.</p>
+          </div>
+          <button class="text-primary font-semibold hidden sm:flex items-center">View All Catalog <span class="material-symbols-outlined ml-1">arrow_forward</span></button>
+        </div>
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </div>
+    </section>
+
+    <!-- TRACKING SECTION: Order tracking area with search, status, map, and sidebar panels -->
+    <section id="tracking" class="bg-surface py-0">
+      <!-- TRACKING SEARCH: Order ID / phone search input and track button -->
+      <section class="bg-primary-container/30 py-16 px-4 md:px-8 border-b border-outline-variant/30">
+        <div class="max-w-[1280px] mx-auto flex flex-col items-center text-center">
+          <h2 class="text-4xl md:text-5xl font-bold text-primary mb-5">Track Your Fuel Delivery</h2>
+          <p class="text-lg text-on-surface-variant mb-8 max-w-2xl">Enter your Order ID or registered Phone Number to get real-time updates on your energy supply.</p>
+          <div id="track-search-wrap" class="w-full max-w-xl bg-surface p-2 rounded-lg border border-outline-variant flex items-center shadow-sm">
+            <span class="material-symbols-outlined text-outline ml-2">search</span>
+            <input id="tracking-search-input" class="flex-grow border-none focus:ring-0 text-sm bg-transparent px-3" placeholder="Order ID or Phone Number (e.g., STAR-12345)" type="text"/>
+            <button id="track-order-btn" class="bg-primary text-on-primary px-6 py-2 rounded font-semibold hover:opacity-90 transition-all">Track Delivery</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="max-w-[1280px] mx-auto px-4 md:px-8 py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
+            <!-- TRACKING ORDER CARD: Status badge, order ID, ETA, and delivery stepper -->
+            <div class="bg-white border border-outline-variant rounded-lg p-6 overflow-hidden relative">
+              <div class="flex justify-between items-start mb-6 gap-4">
+                <div>
+                  <span id="tracking-status-badge" class="bg-surface-container-highest text-primary px-3 py-1 rounded-full text-xs font-semibold mb-3 inline-block uppercase">In Transit</span>
+                  <h3 id="tracking-order-id" class="text-2xl font-semibold text-on-surface">Order #STAR-88294</h3>
+                  <p id="tracking-eta" class="text-sm text-on-surface-variant">Estimated Arrival: Today, 2:30 PM - 3:00 PM</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-outline uppercase tracking-wider">Fuel Type</p>
+                  <p class="text-sm font-semibold text-primary">Premium Unleaded (500L)</p>
+                </div>
+              </div>
+              <div class="relative py-4">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex flex-col items-center z-10">
+                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-[20px]">check</span></div>
+                    <span class="mt-2 text-xs font-semibold text-primary">Placed</span>
+                  </div>
+                  <div class="stepper-line active"></div>
+                  <div class="flex flex-col items-center z-10">
+                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-[20px]">check</span></div>
+                    <span class="mt-2 text-xs font-semibold text-primary">Processing</span>
+                  </div>
+                  <div class="stepper-line active"></div>
+                  <div class="flex flex-col items-center z-10">
+                    <div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center border-2 border-primary ring-4 ring-primary-container/20"><span class="material-symbols-outlined text-[20px]">local_shipping</span></div>
+                    <span class="mt-2 text-xs font-semibold text-primary">On Way</span>
+                  </div>
+                  <div class="stepper-line"></div>
+                  <div class="flex flex-col items-center z-10">
+                    <div class="w-10 h-10 rounded-full bg-surface-container-highest text-outline-variant flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">home</span></div>
+                    <span class="mt-2 text-xs font-semibold text-outline">Delivered</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TRACKING MAP: Live map image and current location overlay -->
+            <div class="bg-surface-container-low border border-outline-variant rounded-lg h-[400px] overflow-hidden relative group">
+              <img alt="Live Map Tracking" class="w-full h-full object-cover grayscale-[0.2] opacity-80 group-hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPnfylUvIb5isVK5jyKHU0uAAeTSi-FUPNo9ltacw5frA57LA32UTDArr-vXdA-fzMK3G7sutjMbTLbua7HCYvJ1Aibe3JxTlc2BIuK7giojdus9D4auDnaXRgQOP_Z9ZI0KLTRLgaG3qT0ny4LIHiXCURFQv1M_us3XGk28vPnyRSBCB1QTvhYB2AyNSa_5RaWPC9woII_-DaRJcfr819S8aOGBkJsoxrvh3E5P7WLef4HHPgXUZsOE-7DkHOm2hd-ndMwTNPhpP6"/>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              <div class="absolute bottom-4 left-4 bg-white p-3 rounded border border-outline-variant flex items-center gap-3 shadow-lg">
+                <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-primary"><span class="material-symbols-outlined text-sm">near_me</span></div>
+                <div>
+                  <p class="text-xs font-semibold">Current Location</p>
+                  <p class="text-xs text-outline">Industrial Zone, Bypass Rd</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <!-- TRACKING AGENT: Delivery agent profile, rating, and contact buttons -->
+            <div class="bg-white border border-outline-variant rounded-lg p-6">
+              <h3 class="text-xs font-semibold text-outline uppercase mb-4 tracking-wider">Delivery Agent</h3>
+              <div class="flex items-center gap-4 mb-6">
+                <img alt="Agent Portrait" class="w-16 h-16 rounded-full object-cover border-2 border-primary-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIBH2ONQVV92lgBoLobqYIbKOXOkTgm4msCII5nqEinIKsTglHLoJpKo-Mw0MLT6TD_SsvnkJehsfRJC_E6hXHVytCUE_hqxFSAbwMQntKAneUDIobgbgsGe48__lCZXTRG2rNmODz2ns_wDWvs5NMbrRXJB8mgl4m3PoyaQKN7sSj_qw3V5gz8UpjIRaop6RYLaY5yDb-JfMEJKVUdAMY1nlERJ7-bRdBbp4UqwFZcVse6r3c14fS7faQlOP-rdTVIDdAvsHDmIoW"/>
+                <div>
+                  <p class="text-sm font-semibold text-on-surface">Ahmed Farah</p>
+                  <p class="text-xs text-outline">Certified Tanker Driver</p>
+                  <div class="flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-sm text-[#FFD700]" style="font-variation-settings: 'FILL' 1;">star</span><span class="text-xs font-semibold">4.9</span></div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <button class="w-full bg-primary text-on-primary py-2 rounded font-semibold flex items-center justify-center gap-2 hover:opacity-90"><span class="material-symbols-outlined text-base">call</span>Contact Agent</button>
+                <button class="w-full border border-primary text-primary py-2 rounded font-semibold flex items-center justify-center gap-2 hover:bg-primary-container/30 transition-colors"><span class="material-symbols-outlined text-base">chat_bubble</span>Send Message</button>
+              </div>
+            </div>
+
+            <!-- TRACKING DETAILS: Delivery address, payment method, and package contents -->
+            <div class="bg-white border border-outline-variant rounded-lg p-6">
+              <h3 class="text-xs font-semibold text-outline uppercase mb-4 tracking-wider">Delivery Details</h3>
+              <div class="space-y-4">
+                <div class="flex gap-3"><span class="material-symbols-outlined text-primary">pin_drop</span><div><p class="text-sm font-semibold">Delivery Address</p><p class="text-sm text-on-surface-variant">Star Business Center, 3rd Floor, Hargeisa, Somaliland</p></div></div>
+                <div class="flex gap-3"><span class="material-symbols-outlined text-primary">payments</span><div><p class="text-sm font-semibold">Payment Method</p><p class="text-sm text-on-surface-variant">Corporate Billing (Net-30)</p></div></div>
+                <div class="flex gap-3"><span class="material-symbols-outlined text-primary">inventory_2</span><div><p class="text-sm font-semibold">Package Contents</p><p class="text-sm text-on-surface-variant">500 Liters Premium Fuel</p></div></div>
+              </div>
+            </div>
+
+            <!-- TRACKING HELP: Support callout and help center link -->
+            <div class="bg-primary p-6 rounded-lg text-on-primary">
+              <p class="text-sm font-semibold mb-1">Need help?</p>
+              <p class="text-sm mb-4 opacity-90">Our dispatch team is available 24/7 for delivery support.</p>
+              <a class="text-sm font-semibold underline" href="#">Go to Help Center</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+
+     <!-- ABOUT SECTION: Company mission, offerings, and contact info cards -->
+     <section id="about" class="py-16 bg-surface-container-low">
+      <div class="max-w-[1280px] mx-auto px-4 md:px-8">
+        <div class="mb-10">
+          <h2 class="text-4xl md:text-5xl font-bold text-primary">About Us</h2>
+          <p class="mt-3 text-lg text-on-surface-variant max-w-3xl">
+            Star Fuel Station is a modern energy service company based in Hargeisa, committed to reliable fuel supply, transparent order tracking, and professional customer support for both individuals and businesses.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <article class="bg-white border border-outline-variant rounded-xl p-6">
+            <div class="w-11 h-11 rounded-xl bg-primary-container flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+            <h3 class="mt-4 text-xl font-semibold text-on-surface">Our Mission</h3>
+            <p class="mt-2 text-on-surface-variant">
+              Deliver safe, high-quality fuel and logistics services that keep homes, fleets, and businesses moving every day.
+            </p>
+          </article>
+          <article class="bg-white border border-outline-variant rounded-xl p-6">
+            <div class="w-11 h-11 rounded-xl bg-primary-container flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">engineering</span>
+            </div>
+            <h3 class="mt-4 text-xl font-semibold text-on-surface">What We Offer</h3>
+            <p class="mt-2 text-on-surface-variant">
+              Fuel products, delivery tracking, and responsive support through one clear platform with dependable operations.
+            </p>
+          </article>
+          <article class="bg-white border border-outline-variant rounded-xl p-6">
+            <div class="w-11 h-11 rounded-xl bg-primary-container flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">location_on</span>
+            </div>
+            <h3 class="mt-4 text-xl font-semibold text-on-surface">Company Info</h3>
+            <p class="mt-2 text-on-surface-variant">
+              Hargeisa, Star Business Center<br/>
+              Phone: 252 63 7607576<br/>
+              Email: starfuelstation@gmail.com
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT SECTION: Contact info, business hours, map, and message form -->
+    <section id="contact" class="py-16 bg-background">
+      <div class="max-w-[1280px] mx-auto px-4 md:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          <!-- CONTACT INFO: Phone, email, location, hours, and map preview -->
+          <div class="lg:col-span-5 space-y-10">
+            <div>
+              <h2 class="text-5xl font-bold text-primary mb-6">Get in touch</h2>
+              <p class="text-xl text-on-surface-variant leading-relaxed">
+                Have questions about our fuel delivery or corporate services? Our team is standing by to provide professional assistance for all your energy logistics needs.
+              </p>
+            </div>
+            <div class="space-y-5">
+              <div class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <span class="material-symbols-outlined">call</span>
+                </div>
+                <div>
+                  <p class="text-xs text-outline uppercase tracking-wider">Phone Number</p>
+                  <p class="text-xl font-semibold">252 63 7607576</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <span class="material-symbols-outlined">mail</span>
+                </div>
+                <div>
+                  <p class="text-xs text-outline uppercase tracking-wider">Email Address</p>
+                  <p class="text-xl font-semibold">starfuelstation@gmail.com</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <span class="material-symbols-outlined">location_on</span>
+                </div>
+                <div>
+                  <p class="text-xs text-outline uppercase tracking-wider">Location</p>
+                  <p class="text-xl font-semibold">Hargeisa, Star Business Center</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-surface-container-low border border-outline-variant p-5 rounded-xl">
+              <div class="flex items-center gap-2 mb-4 text-primary">
+                <span class="material-symbols-outlined">schedule</span>
+                <h3 class="text-sm font-semibold uppercase tracking-wider">Business Hours</h3>
+              </div>
+              <div class="space-y-3 text-base">
+                <div class="flex justify-between border-b border-outline-variant pb-2">
+                  <span>Saturday - Wednesday</span>
+                  <span class="font-semibold">08:00 AM - 10:00 PM</span>
+                </div>
+                <div class="flex justify-between border-b border-outline-variant pb-2">
+                  <span>Thursday</span>
+                  <span class="font-semibold">08:00 AM - 02:00 PM</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-outline">Friday</span>
+                  <span class="font-semibold text-red-600">Closed</span>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-full h-48 rounded-xl overflow-hidden shadow-sm">
+              <img alt="Location Map" class="w-full h-full object-cover grayscale opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw9PziS2iamLVcSsF-2OlCtxAH_8aDoaO0X9TkKIGzk7Spiy8CPNgDO4y1UQ-zcZVzmaGSBMIpPL8IFMDIN6d_4z_fLkauLE99G--gW5OLoDEq1jMuhSbUhlxCUAUM7vrLR-wTTzAX8Fv57y6-D0GAKa8rKvVYJm0Khjt4XyneloFDedrxK84DbBjQSiMVDwNTGWtJnNYZFG5nKrjjVd2-N2lw83u4MQtlAGphsNorMuPX4YLCNnrsvIQFHrIHXSJbeePpsS9l30ZA"/>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="bg-primary text-white p-3 rounded-full shadow-lg">
+                  <span class="material-symbols-outlined">local_gas_station</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- CONTACT FORM: Name, email, subject, message fields and submit button -->
+          <div class="lg:col-span-7 bg-white p-6 md:p-8 rounded-xl border border-outline-variant shadow-sm">
+            <div class="mb-8">
+              <h3 class="text-3xl font-semibold text-on-surface">Send us a message</h3>
+              <p class="text-on-surface-variant">We respond to all inquiries within 24 business hours.</p>
+            </div>
+            <form id="contact-form" class="space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-1">
+                  <label class="text-sm font-semibold text-on-surface-variant">Full Name</label>
+                  <input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all py-3 px-4 outline-none" placeholder="John Doe" type="text"/>
+                </div>
+                <div class="space-y-1">
+                  <label class="text-sm font-semibold text-on-surface-variant">Email Address</label>
+                  <input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all py-3 px-4 outline-none" placeholder="john@example.com" type="email"/>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label class="text-sm font-semibold text-on-surface-variant">Subject</label>
+                <select class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all py-3 px-4 outline-none">
+                  <option>Fuel Inquiry</option>
+                  <option>Order Support</option>
+                  <option>Business Partnership</option>
+                  <option>Feedback</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="text-sm font-semibold text-on-surface-variant">Message</label>
+                <textarea class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-all py-3 px-4 outline-none resize-none" placeholder="How can we help you?" rows="6"></textarea>
+              </div>
+              <div class="pt-4">
+                <button id="contact-submit-btn" class="w-full bg-primary text-white h-12 font-semibold uppercase tracking-widest rounded hover:opacity-90 transition-all active:scale-[0.98]" type="submit">
+                  Send Message
+                </button>
+              </div>
+              <p class="text-xs text-outline text-center">
+                By submitting this form, you agree to our <a class="text-primary hover:underline" href="#">Privacy Policy</a>.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER: Brand name, copyright, and policy/legal links -->
+  <footer class="bg-surface-container-low text-on-surface border-t border-outline-variant py-10">
+    <div class="max-w-[1280px] mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex flex-col items-center md:items-start"><span class="font-semibold text-primary">Star Fuel Station</span><p class="text-xs text-on-surface-variant">© 2026 Star Fuel Station. All rights reserved.</p></div>
+      <div class="flex flex-wrap justify-center gap-4 text-xs">
+        <a class="text-on-surface-variant hover:text-primary hover:underline" href="#">Privacy Policy</a>
+        <a class="text-on-surface-variant hover:text-primary hover:underline" href="#">Terms of Service</a>
+        <a class="text-on-surface-variant hover:text-primary hover:underline" href="#">Shipping Info</a>
+        <a class="text-on-surface-variant hover:text-primary hover:underline" href="#">FAQs</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CART MODAL: Shopping cart overlay, header, and item list container -->
+  <div id="cart-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 p-4">
+    <div class="max-w-lg mx-auto mt-20 bg-white rounded-lg border border-outline-variant overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant"><h3 class="font-semibold text-primary">Shopping Cart</h3><button type="button" class="close-modal material-symbols-outlined text-on-surface-variant">close</button></div>
+      <div id="cart-list" class="p-5 space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL: Login overlay, session banner, and sign-in form -->
+  <div id="login-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 p-4">
+    <div class="h-full w-full flex items-center justify-center">
+    <div class="w-[420px] h-[400px] max-w-[95vw] bg-white rounded-2xl border border-outline-variant overflow-hidden shadow-xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant"><h3 class="font-semibold text-primary">Login</h3><button type="button" class="close-modal material-symbols-outlined text-on-surface-variant">close</button></div>
+      <div class="h-[calc(400px-57px)] p-10 space-y-4 overflow-y-auto">
+        <div id="session-banner" class="hidden p-4 rounded border border-surface-container-highest bg-surface-container-low">
+          <p class="text-sm"><span class="font-semibold">Signed in as </span><span id="session-name"></span></p>
+          <p class="text-xs text-on-surface-variant mt-1" id="session-role"></p>
+          <div class="flex gap-2 mt-3"><button type="button" id="continue-btn" class="flex-1 py-2 bg-primary text-on-primary rounded text-sm font-semibold">Continue</button><button type="button" id="switch-btn" class="flex-1 py-2 border border-outline-variant rounded text-sm font-semibold">Switch Account</button></div>
+        </div>
+        <form id="login-form" class="space-y-3">
+          <input type="email" id="email" class="form-input" required placeholder="Email address"/>
+          <input type="password" id="password" class="form-input" required placeholder="Password"/>
+          <div id="login-error" class="hidden p-3 rounded text-sm bg-red-50 text-red-700"></div>
+          <button type="submit" class="w-full py-2.5 rounded bg-primary text-on-primary font-semibold">Sign In</button>
+        </form>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT: store.js - Shared data store and state helpers -->
+  <script src="js/store.js"></script>
+  <!-- SCRIPT: auth.js - Authentication and session management -->
+  <script src="js/auth.js"></script>
+  <!-- INLINE SCRIPT: Home page cart, products, modals, tracking, nav, and contact form logic -->
+  <script>
+    // JS DATA: products - Product catalog array (names, prices, images, descriptions)
+    const products = [
+      { id: 'prod1', name: 'Premium Unleaded Fuel', price: 1.25, suffix: '/L', desc: 'Optimized for efficiency and engine longevity with cleaning additives.', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA6g-K8_RLo7P7CH4ap4hCm-ShTSFlo7t4iF5BOwf3aEHb8jKlEohpN9ok0s8hqUL69A0zAW2amBZSlK8zxX447_CPoeoer7FDz8Cdgv_N_4ephp-WXWSOt-fV47XlG7-4rEw-JBTtG7MTsuA_2y3Ek5982XC5z2cWFJ1XVC7eCVtkqCJZ4nSiQPMX6VIWQrOqBIQYbdGJ3CNKeth3pd0lQAPItOAQSvR2l9THoHU-bEDxTgjkzmRvqysABMWsa37OO9s1HUp8HSW-O', tag: 'Energy' },
+      { id: 'prod2', name: 'Star Synthetic Oil 5W-30', price: 45.0, suffix: '', desc: 'Full synthetic protection for modern high-performance engines.', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAW1WNf99xbdxXy0YHC_oXrOFybcN1brTT5SzN2se0cCF2AV7XCOMQNWaFuTQtQLFK3YllkH4UwrrSUuSnGAhG7O0uOvLlt9nurXnUTW4JMDvbwqBmGbwRlMkRthwHkEyqgrTwc1mi07fPLYesX-2ZGrudsGHXwRrkwyDdTJp5QrlEbaavgRMHBMbuAaYZdNx0NlOtZbsJOtXg4_oYYV9FislkLU9r-oO-cin0EcDrmRnZuu5FvagWNRlDLRucXjE4uv0BkjSmguaWR', tag: 'Maintenance' },
+      { id: 'prod3', name: 'Premium Travel Kit', price: 15.5, suffix: '', desc: 'Essential snacks and care items for your long-distance journeys.', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXbkI-Zwx6C7YIqLcOYbbAOgcSm2wz0sPUzLmN2d9WXBOLo9FsnsUPm0O9gUMiuOK2icLHpvrOyslG5IjkEumpq8TSUCd_9jYZ0b383alOfakD7v7z2NO1P9UmqCgo0mXc1CNw_LR7-oJeOa7XPP4lG5yLWC8An2LVZt9BMohi_Sj2-XKc3UvW3kUYLIpQuLZuVCJX_p4OXteNTqMsDgtdLSpa33jUKQEl6vWnAzm5m3b6TSXxDF3RWQR0QstWbW97ItXyk7xQRFqr', tag: 'Shop' }
+    ];
+    // JS DATA: cart - In-memory shopping cart items array
+    const cart = [];
+    // JS DATA: modalIds - List of modal element IDs for backdrop close handling
+    const modalIds = ['cart-modal', 'login-modal'];
+    // JS HELPER: goToApp - Redirect to dashboard after login
+    const goToApp = () => { window.location.href = 'app.html'; };
+    // JS HELPER: openModal - Show a modal by removing hidden class
+    const openModal = (id) => document.getElementById(id).classList.remove('hidden');
+    // JS HELPER: closeModal - Hide a modal by adding hidden class
+    const closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+    // JS FUNCTION: renderProducts - Build and inject product cards into #product-grid
+    function renderProducts() {
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = products.map((product) => (
+        '<article class="bg-white border border-outline-variant rounded-lg overflow-hidden hover:shadow-xl transition-all"><div class="h-48 bg-surface-container overflow-hidden"><img class="w-full h-full object-cover" src="' + product.image + '" alt="' + product.name + '"/></div><div class="p-5 space-y-4"><div class="flex justify-between items-start gap-2"><div><span class="text-xs bg-primary-container/30 text-on-primary-container px-2 py-1 rounded">' + product.tag + '</span><h3 class="text-lg font-bold mt-2">' + product.name + '</h3></div><span class="text-primary font-bold text-2xl">$' + product.price.toFixed(2) + (product.suffix ? '<span class="text-xs font-normal">' + product.suffix + '</span>' : '') + '</span></div><p class="text-sm text-on-surface-variant">' + product.desc + '</p><button data-add="' + product.id + '" class="add-cart-btn w-full bg-primary-container text-on-primary-container py-2 rounded font-semibold text-sm flex items-center justify-center gap-1"><span class="material-symbols-outlined text-base">add_shopping_cart</span><span>Add to Cart</span></button></div></article>'
+      )).join('');
+    }
+
+    // JS FUNCTION: renderCart - Update cart list UI and badge count
+    function renderCart() {
+      const list = document.getElementById('cart-list');
+      const count = document.getElementById('cart-count');
+      if (!cart.length) list.innerHTML = '<p class="text-sm text-on-surface-variant">Your cart is empty.</p>';
+      else list.innerHTML = cart.map((item) => ('<div class="flex items-center justify-between p-3 rounded bg-surface-container-low border border-surface-container-highest"><div><p class="font-semibold text-sm">' + item.name + '</p><p class="text-xs text-on-surface-variant">Qty: ' + item.qty + '</p></div><span class="font-semibold text-primary">$' + (item.price * item.qty).toFixed(2) + '</span></div>')).join('');
+      const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
+      count.textContent = String(totalQty);
+      if (totalQty > 0) { count.classList.remove('hidden'); count.classList.add('flex'); } else { count.classList.add('hidden'); count.classList.remove('flex'); }
+    }
+
+    // JS FUNCTION: addToCart - Add or increment a product in the cart
+    function addToCart(productId) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) return;
+      const existing = cart.find((item) => item.id === productId);
+      if (existing) existing.qty += 1;
+      else cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+      renderCart();
+    }
+
+    // JS FUNCTION: showError - Display login error message in #login-error
+    function showError(msg) {
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = msg;
+      errorEl.classList.remove('hidden');
+    }
+    // JS FUNCTION: clearError - Hide the login error message
+    function clearError() { document.getElementById('login-error').classList.add('hidden'); }
+    // JS FUNCTION: handleLoginResult - Navigate to app on success or show error
+    function handleLoginResult(result) { if (result.success) goToApp(); else showError(result.message); }
+
+    // JS FUNCTION: initSessionBanner - Show existing session and wire continue/switch buttons
+    function initSessionBanner() {
+      const existing = Auth.getSession();
+      if (!existing) return;
+      document.getElementById('session-banner').classList.remove('hidden');
+      document.getElementById('session-name').textContent = existing.name;
+      document.getElementById('session-role').textContent = Auth.roleLabel(existing.role);
+      document.getElementById('continue-btn').addEventListener('click', goToApp);
+      document.getElementById('switch-btn').addEventListener('click', () => {
+        localStorage.removeItem(Auth.SESSION_KEY);
+        document.getElementById('session-banner').classList.add('hidden');
+      });
+    }
+
+    // JS EVENT: open-login-btn - Open login modal on click
+    document.getElementById('open-login-btn').addEventListener('click', () => openModal('login-modal'));
+    // JS EVENT: cart-btn - Open cart modal on click
+    document.getElementById('cart-btn').addEventListener('click', () => openModal('cart-modal'));
+
+    // JS EVENT: close-modal buttons - Close parent modal on click
+    document.querySelectorAll('.close-modal').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const modal = btn.closest('[id$="-modal"]');
+        if (modal) closeModal(modal.id);
+      });
+    });
+    // JS EVENT: modal backdrop - Close modal when clicking outside content
+    modalIds.forEach((id) => {
+      document.getElementById(id).addEventListener('click', (e) => { if (e.target.id === id) closeModal(id); });
+    });
+
+    // JS EVENT: login-form submit - Authenticate user via Auth.login
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearError();
+      handleLoginResult(Auth.login(document.getElementById('email').value.trim().toLowerCase(), document.getElementById('password').value));
+    });
+    // JS EVENT: add-cart-btn delegation - Handle Add to Cart button clicks
+    document.addEventListener('click', (e) => {
+      const addBtn = e.target.closest('.add-cart-btn');
+      if (addBtn) addToCart(addBtn.dataset.add);
+    });
+
+    // JS EVENT: tracking search - Focus/blur styles and track button order lookup
+    const trackInput = document.getElementById('tracking-search-input');
+    const trackWrap = document.getElementById('track-search-wrap');
+    const trackBtn = document.getElementById('track-order-btn');
+    trackInput?.addEventListener('focus', () => {
+      trackWrap.classList.add('border-primary', 'ring-2', 'ring-primary-container');
+    });
+    trackInput?.addEventListener('blur', () => {
+      trackWrap.classList.remove('border-primary', 'ring-2', 'ring-primary-container');
+    });
+    trackBtn?.addEventListener('click', () => {
+      const raw = (trackInput.value || '').trim();
+      const code = raw || 'STAR-88294';
+      document.getElementById('tracking-order-id').textContent = 'Order #' + code.toUpperCase();
+      document.getElementById('tracking-status-badge').textContent = 'In Transit';
+    });
+
+    // JS EVENT: nav-link active state - Highlight clicked navigation link
+    const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+    // JS FUNCTION: setActiveNav - Apply active styles to the selected nav link
+    function setActiveNav(link) {
+      navLinks.forEach((el) => {
+        el.classList.remove('text-primary', 'border-b-2', 'border-primary', 'pb-1');
+        el.classList.add('text-on-surface-variant');
+      });
+      link.classList.add('text-primary', 'border-b-2', 'border-primary', 'pb-1');
+      link.classList.remove('text-on-surface-variant');
+    }
+    navLinks.forEach((link) => {
+      link.addEventListener('click', () => setActiveNav(link));
+    });
+
+    // JS EVENT: contact-form submit - Simulate form send with button feedback
+    const contactForm = document.getElementById('contact-form');
+    const contactSubmitBtn = document.getElementById('contact-submit-btn');
+    contactForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const originalText = contactSubmitBtn.textContent;
+      contactSubmitBtn.textContent = 'Sending...';
+      contactSubmitBtn.disabled = true;
+      contactSubmitBtn.classList.add('opacity-70');
+      setTimeout(() => {
+        contactSubmitBtn.textContent = 'Message Sent Successfully';
+        contactSubmitBtn.classList.remove('bg-primary');
+        contactSubmitBtn.classList.add('bg-green-600');
+        setTimeout(() => {
+          contactSubmitBtn.textContent = originalText;
+          contactSubmitBtn.classList.remove('bg-green-600');
+          contactSubmitBtn.classList.add('bg-primary');
+          contactSubmitBtn.disabled = false;
+          contactSubmitBtn.classList.remove('opacity-70');
+          contactForm.reset();
+        }, 2200);
+      }, 1100);
+    });
+
+    // JS INIT: Page startup - Render products, cart, and session banner
+    renderProducts();
+    renderCart();
+    initSessionBanner();
+  </script>
+</body>
+</html>

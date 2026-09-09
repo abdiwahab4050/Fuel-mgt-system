@@ -1,0 +1,685 @@
+/* SECTION: Material Symbols icon font — adjust weight, fill, and optical size */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* SECTION: Chart wrapper sizing — change height or aspect ratio for dashboard charts */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
+/* SECTION: Bento dashboard grid — change column count, gap, or breakpoints */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+/* SECTION: Bento grid tablet+ breakpoint — widen gap on medium screens and up */
+@media (min-width: 768px) {
+  /* SECTION: Bento grid gap at md+ — increase or decrease spacing between cards */
+  .bento-grid {
+    gap: 20px;
+  }
+}
+
+/* SECTION: Custom scrollbar width — change scrollbar thickness */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* SECTION: Custom scrollbar track — change track background or visibility */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* SECTION: Custom scrollbar thumb — change thumb color and corner radius */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Data tables */
+/* SECTION: Data table base layout — change width or collapse behavior */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* SECTION: Sticky table header — adjust stickiness offset or header background */
+.data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+}
+
+/* SECTION: Table header cells — change typography, padding, or border color */
+.data-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: Geist, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #76777d;
+  border-bottom: 2px solid #c6c6cd;
+}
+
+/* SECTION: Alternating row background — change zebra stripe color */
+.data-table tbody tr:nth-child(even) {
+  background: #f8f9ff;
+}
+
+/* SECTION: Row hover state — change highlight color on mouse over */
+.data-table tbody tr:hover {
+  background: #eff4ff;
+}
+
+/* SECTION: Table body cells — adjust cell padding, font size, or row borders */
+.data-table tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #e5eeff;
+}
+
+/* Status badges */
+/* SECTION: Badge base pill — change padding, radius, or shared badge typography */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-family: Geist, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* SECTION: Success badge colors — update green status background and text */
+.badge-success {
+  background: rgba(0, 108, 73, 0.1);
+  color: #006c49;
+}
+
+/* SECTION: Warning badge colors — update amber status background and text */
+.badge-warning {
+  background: rgba(255, 185, 95, 0.2);
+  color: #b87500;
+}
+
+/* SECTION: Danger badge colors — update red status background and text */
+.badge-danger {
+  background: rgba(186, 26, 26, 0.1);
+  color: #ba1a1a;
+}
+
+/* SECTION: Info badge colors — update neutral-blue status background and text */
+.badge-info {
+  background: rgba(86, 94, 116, 0.1);
+  color: #565e74;
+}
+
+/* SECTION: Neutral badge colors — update default gray status background and text */
+.badge-neutral {
+  background: rgba(118, 119, 125, 0.1);
+  color: #45464d;
+}
+
+/* Modal */
+/* SECTION: Modal backdrop overlay — change dim color, z-index, or fade timing */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 28, 48, 0.5);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+/* SECTION: Modal overlay visible state — adjust open opacity or visibility */
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* SECTION: Modal dialog panel — change max width, border, shadow, or scroll */
+.modal-content {
+  background: #ffffff;
+  border: 1px solid #c6c6cd;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Toast */
+/* SECTION: Toast notification stack — change position, spacing, or z-index */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* SECTION: Toast message base — adjust padding, radius, font, or animation */
+.toast {
+  padding: 12px 20px;
+  border-radius: 0.25rem;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease;
+}
+
+/* SECTION: Success toast colors — change green toast background and text */
+.toast-success {
+  background: #6cf8bb;
+  color: #002113;
+}
+
+/* SECTION: Error toast colors — change red toast background and text */
+.toast-error {
+  background: #ffdad6;
+  color: #93000a;
+}
+
+/* SECTION: Info toast colors — change blue toast background and text */
+.toast-info {
+  background: #dce9ff;
+  color: #0b1c30;
+}
+
+/* SECTION: Toast slide-in keyframes — change animation name or duration in .toast */
+@keyframes slideIn {
+  /* SECTION: Toast animation start — adjust off-screen position or initial opacity */
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  /* SECTION: Toast animation end — adjust final position or opacity */
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Form fields */
+/* SECTION: Form field group spacing — change vertical gap between fields */
+.form-group {
+  margin-bottom: 16px;
+}
+
+/* SECTION: Form field labels — change label size, color, or uppercase styling */
+.form-label {
+  display: block;
+  font-family: Geist, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #45464d;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* SECTION: Text inputs, selects, and textareas — change border, padding, or colors */
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #c6c6cd;
+  border-radius: 0.25rem;
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+  background: #ffffff;
+  color: #0b1c30;
+  transition: border-color 0.2s;
+}
+
+/* SECTION: Focused form controls — change focus ring color or border width */
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border: 2px solid #131b2e;
+}
+
+/* SECTION: Textarea sizing — adjust minimum height or resize behavior */
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Page sections */
+/* SECTION: Page title row — change header layout, alignment, or bottom margin */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* SECTION: Page header mobile breakpoint — stack action buttons full width on small screens */
+@media (max-width: 639px) {
+  /* SECTION: Page header actions container — force full width on mobile */
+  .page-header > div:last-child {
+    width: 100%;
+  }
+
+  /* SECTION: Page header buttons on mobile — center and stretch action controls */
+  .page-header > div:last-child button,
+  .page-header > div:last-child .flex {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* SECTION: Content card sections — change background, border, or default padding */
+.page-section {
+  background: #ffffff;
+  border: 1px solid #c6c6cd;
+  border-radius: 0.5rem;
+  padding: 16px;
+}
+
+/* SECTION: Page section sm+ breakpoint — increase inner padding on wider screens */
+@media (min-width: 640px) {
+  /* SECTION: Page section padding at sm+ — adjust card padding for tablets and up */
+  .page-section {
+    padding: 24px;
+  }
+}
+
+/* Sidebar mobile */
+/* SECTION: Sidebar mobile backdrop — change overlay color or z-index when menu opens */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 45;
+}
+
+/* SECTION: Sidebar slide transition — change animation duration or easing */
+.sidebar {
+  transition: transform 0.3s ease;
+}
+
+/* SECTION: Sidebar mobile/tablet breakpoint — off-canvas drawer behavior below lg */
+@media (max-width: 1023px) {
+  /* SECTION: Hidden sidebar off-screen — adjust slide distance or default transform */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  /* SECTION: Open sidebar visible state — reset transform when drawer is open */
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* SECTION: Active sidebar overlay — show dim backdrop when drawer is open */
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* Mobile bottom navigation */
+/* SECTION: Fixed bottom nav bar — change height, shadow, safe-area padding, or z-index */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 48;
+  background: #ffffff;
+  border-top: 1px solid #c6c6cd;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-height: 60px;
+}
+
+/* Sidebar footer sits above mobile bottom nav */
+/* SECTION: Sidebar footer mobile offset — add bottom padding so footer clears bottom nav */
+@media (max-width: 1023px) {
+  /* SECTION: Sidebar footer safe area — adjust clearance above mobile bottom nav */
+  .sidebar-footer {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* SECTION: Logout nav item — change destructive action color and max width */
+.mobile-nav-item.logout-item {
+  color: #ba1a1a;
+  max-width: 64px;
+}
+
+/* SECTION: Logout nav item active/hover — change red highlight on tap or hover */
+.mobile-nav-item.logout-item.active,
+.mobile-nav-item.logout-item:hover {
+  color: #ba1a1a;
+  background: rgba(186, 26, 26, 0.08);
+}
+
+/* SECTION: Hide bottom nav scrollbar — webkit scrollbar visibility for nav strip */
+.mobile-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* SECTION: Bottom nav tab buttons — change icon layout, size, colors, or tap target */
+.mobile-nav-item {
+  flex: 1 1 0;
+  min-width: 56px;
+  max-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  color: #76777d;
+  font-family: Geist, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: color 0.2s, background 0.2s;
+}
+
+/* SECTION: Bottom nav icon size — change Material Symbol size inside nav items */
+.mobile-nav-item .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* SECTION: Active bottom nav item — change selected tab color and background */
+.mobile-nav-item.active {
+  color: #006c49;
+  background: rgba(0, 108, 73, 0.08);
+}
+
+/* SECTION: Bottom nav item hover — change color on hover for inactive tabs */
+.mobile-nav-item:hover {
+  color: #0b1c30;
+}
+
+/* SECTION: Dark mode bottom nav bar — change dark theme nav background and border */
+.dark .mobile-bottom-nav {
+  background: #131b2e;
+  border-color: #45464d;
+}
+
+/* SECTION: Dark mode nav item default — change inactive tab color in dark theme */
+.dark .mobile-nav-item {
+  color: #7c839b;
+}
+
+/* SECTION: Dark mode active nav item — change selected tab accent in dark theme */
+.dark .mobile-nav-item.active {
+  color: #6cf8bb;
+  background: rgba(108, 248, 187, 0.1);
+}
+
+/* Responsive typography & layout */
+/* SECTION: Small-screen layout overrides — mobile typography, charts, toasts, tabs */
+@media (max-width: 639px) {
+  /* SECTION: Card padding on mobile — reduce horizontal padding utility on small screens */
+  .p-card-padding {
+    padding: 16px !important;
+  }
+
+  /* SECTION: Metric display text on mobile — shrink large dashboard numbers */
+  .text-display-metrics {
+    font-size: 1.75rem !important;
+    line-height: 2rem !important;
+  }
+
+  /* SECTION: Page header title on mobile — reduce h2 size in page headers */
+  .page-header h2 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  /* SECTION: Chart height on mobile — shorten chart area on small viewports */
+  .chart-container {
+    height: 180px;
+  }
+
+  /* SECTION: Toast position on mobile — center toasts with side insets */
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    top: 72px;
+  }
+
+  /* SECTION: Toast full width on mobile — stretch toast messages edge to edge */
+  .toast {
+    width: 100%;
+  }
+
+  /* SECTION: Notification dropdown on mobile — fixed full-width panel below header */
+  .notif-dropdown {
+    position: fixed;
+    top: 3.5rem;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 70vh;
+  }
+
+  /* SECTION: Pagination wrap on mobile — allow pagination controls to wrap and center */
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* SECTION: Tab list horizontal scroll — enable swipeable tab bar on mobile */
+  .tab-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  /* SECTION: Hide tab list scrollbar — webkit scrollbar for horizontal tabs */
+  .tab-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* SECTION: Tab button sizing on mobile — compact padding and prevent label wrap */
+  .tab-btn {
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+/* SECTION: Data table horizontal scroll breakpoint — enforce min width below lg */
+@media (max-width: 1023px) {
+  /* SECTION: Table min-width on tablet — trigger horizontal scroll for wide tables */
+  .data-table {
+    min-width: 640px;
+  }
+}
+
+/* Dark mode overrides */
+/* SECTION: Dark mode table header — change sticky header background in dark theme */
+.dark .data-table thead {
+  background: #131b2e;
+}
+
+/* SECTION: Dark mode zebra rows — change alternating row tint in dark theme */
+.dark .data-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* SECTION: Dark mode row hover — change row highlight in dark theme */
+.dark .data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* SECTION: Dark mode modal panel — change dialog background and border in dark theme */
+.dark .modal-content {
+  background: #131b2e;
+  border-color: #45464d;
+}
+
+/* SECTION: Dark mode form inputs — change field background, border, and text colors */
+.dark .form-input,
+.dark .form-select,
+.dark .form-textarea {
+  background: #213145;
+  border-color: #45464d;
+  color: #eaf1ff;
+}
+
+/* SECTION: Dark mode page sections — change card background and border in dark theme */
+.dark .page-section {
+  background: #131b2e;
+  border-color: #45464d;
+}
+
+/* Login page */
+/* SECTION: Login page background — change gradient colors or min-height */
+.login-bg {
+  background: linear-gradient(135deg, #131b2e 0%, #213145 50%, #006c49 100%);
+  min-height: 100vh;
+}
+
+/* SECTION: Login card panel — change card background, radius, or shadow */
+.login-card {
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* SECTION: Dark mode login card — change login panel colors in dark theme */
+.dark .login-card {
+  background: #131b2e;
+  border: 1px solid #45464d;
+}
+
+/* Pagination */
+/* SECTION: Pagination row layout — change alignment, gap, or top margin */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* SECTION: Pagination buttons default — change button size, border, and background */
+.pagination button {
+  padding: 6px 12px;
+  border: 1px solid #c6c6cd;
+  border-radius: 0.25rem;
+  background: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* SECTION: Pagination button hover — change hover background for enabled buttons */
+.pagination button:hover:not(:disabled) {
+  background: #eff4ff;
+}
+
+/* SECTION: Pagination disabled buttons — change faded look for prev/next at bounds */
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* SECTION: Pagination active page — change current page button fill and border */
+.pagination button.active {
+  background: #131b2e;
+  color: #ffffff;
+  border-color: #131b2e;
+}
+
+/* Tabs */
+/* SECTION: Tab list container — change tab bar layout, border, or bottom spacing */
+.tab-list {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #c6c6cd;
+  margin-bottom: 24px;
+}
+
+/* SECTION: Tab button default — change inactive tab typography and transparent border */
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #76777d;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+/* SECTION: Tab button hover — change inactive tab color on hover */
+.tab-btn:hover {
+  color: #0b1c30;
+}
+
+/* SECTION: Tab button active — change selected tab color, weight, and underline */
+.tab-btn.active {
+  color: #006c49;
+  border-bottom-color: #006c49;
+  font-weight: 600;
+}
+
+/* Notification dropdown */
+/* SECTION: Notification dropdown panel — change size, position, shadow, or z-index */
+.notif-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 360px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #c6c6cd;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  z-index: 60;
+  display: none;
+}
+
+/* SECTION: Notification dropdown open — show panel when toggled open */
+.notif-dropdown.open {
+  display: block;
+}
+
+/* SECTION: Dark mode notification dropdown — change panel colors in dark theme */
+.dark .notif-dropdown {
+  background: #131b2e;
+  border-color: #45464d;
+}
