@@ -1,0 +1,7 @@
+# Shell scripts and container files must keep Unix line endings,
+# or they fail on Linux ("/bin/sh^M: bad interpreter").
+*.sh               text eol=lf
+Dockerfile         text eol=lf
+docker-compose.yml text eol=lf
+deploy/*.conf      text eol=lf
+deploy/*.sql       text eol=lf
