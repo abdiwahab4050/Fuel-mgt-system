@@ -1,0 +1,49 @@
+# Self-hosted stack: PostgreSQL (UTF-8) + FuelFlow + nginx with HTTPS.
+#
+#   cp backend/.env.production.example backend/.env.production   # then edit it
+#   docker compose up -d --build
+#
+# If you use a hosted database (Neon/Supabase), delete the "db" service and
+# point DATABASE_URL / DIRECT_URL in backend/.env.production at it instead.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fuelflow
+      POSTGRES_USER: fuelflow_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env next to this file}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fuelflow_owner -d fuelflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: backend/.env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "4000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/certs:/etc/nginx/certs:ro
+
+volumes:
+  pgdata:

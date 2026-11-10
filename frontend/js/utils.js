@@ -4,8 +4,14 @@
 const Utils = {
   // SECTION: formats amount using settings currency symbol and locale; change locale or decimal rules here
   formatCurrency(amount) {
-    const settings = Store.getAll().settings;
-    return `${settings.currencySymbol}${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const symbol = (typeof App !== 'undefined' && App.settings?.['currency.symbol']) || Store.getAll().settings.currencySymbol || '$';
+    const n = Number(amount) || 0;
+    return `${n < 0 ? '-' : ''}${symbol}${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  },
+
+  // SECTION: random key so a double-clicked or retried submit is processed only once by the server
+  idempotencyKey() {
+    return (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`);
   },
 
   // SECTION: formats numeric values with configurable decimal places; change default decimals or locale here
@@ -47,9 +53,14 @@ const Utils = {
 
   // SECTION: escapes HTML to prevent XSS in dynamic templates; use before inserting user text into innerHTML
   escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // quotes are escaped too, so the result is safe inside attribute values (value="…", title="…")
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   },
 
   // SECTION: shows transient toast message; change duration, styling classes, or container id here
@@ -127,9 +138,12 @@ const Utils = {
   // SECTION: maps user role to labeled badge; add roles and colors when roles expand
   roleBadge(role) {
     const map = {
-      admin: ['Administrator', 'info'],
+      super_admin: ['Super Administrator', 'info'],
+      station_manager: ['Station Manager', 'warning'],
+      cashier: ['Cashier', 'success'],
       attendant: ['Fuel Attendant', 'success'],
-      fleet_manager: ['Fleet Manager', 'warning'],
+      accountant: ['Accountant', 'info'],
+      customer: ['Customer', 'neutral'],
     };
     const [label, type] = map[role] || [role, 'neutral'];
     return this.badge(label, type);
@@ -222,14 +236,87 @@ const Utils = {
     Utils.toast('CSV exported successfully', 'success');
   },
 
-  // SECTION: role-based page access matrix; update permissions when adding pages or roles
+  // SECTION: reads an image file as a data URL with size and type validation
+  readImageAsDataUrl(file, maxBytes = 512 * 1024) {
+    return new Promise((resolve, reject) => {
+      if (!file || !file.type.startsWith('image/')) {
+        reject(new Error('Please select a valid image file (JPG, PNG, GIF, or WebP).'));
+        return;
+      }
+      if (file.size > maxBytes) {
+        reject(new Error('Image must be smaller than 512KB.'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read the image file.'));
+      reader.readAsDataURL(file);
+    });
+  },
+
+  // SECTION: returns user initials for avatar fallback display
+  userInitials(name) {
+    if (!name) return '?';
+    return name.trim().charAt(0).toUpperCase();
+  },
+
+  // SECTION: page → permissions (any one grants access); keys come from the server's role matrix
+  PAGE_PERMISSIONS: {
+    dashboard: ['dashboard.view'],
+    inventory: ['inventory.view'],
+    pumps: ['pumps.view'],
+    suppliers: ['suppliers.view', 'purchases.view'],
+    purchases: ['purchases.view', 'supplier_payments.manage'],
+    expenses: ['expenses.view', 'expenses.manage'],
+    finance: ['finance.view', 'reports.financial'],
+    sales: ['sales.view', 'sales.view_own'],
+    customers: ['customers.view'],
+    invoices: ['invoices.view', 'invoices.view_own'],
+    vehicles: ['fleet.view'],
+    consumption: ['fleet.view', 'consumption.record'],
+    reports: ['reports.view'],
+    users: ['users.view', 'users.manage'],
+    settings: null, // profile is always available to signed-in users
+  },
+
+  // SECTION: page access check for the signed-in user; role arg kept for older callers
   canAccess(role, page) {
-    const allPages = ['dashboard', 'inventory', 'suppliers', 'purchases', 'sales', 'vehicles', 'consumption', 'reports', 'users', 'settings'];
-    const permissions = {
-      admin: allPages,
-      attendant: ['dashboard', 'inventory', 'suppliers', 'purchases', 'sales', 'reports', 'settings'],
-      fleet_manager: ['dashboard', 'inventory', 'vehicles', 'consumption', 'reports', 'settings'],
-    };
-    return (permissions[role] || allPages).includes(page);
+    if (!(page in this.PAGE_PERMISSIONS)) return false;
+    const required = this.PAGE_PERMISSIONS[page];
+    return !required || Auth.can(...required);
+  },
+
+  // SECTION: runs an API action; toasts success or the server's error. Returns the result, or null on failure
+  async act(fn, successMessage) {
+    try {
+      const result = await fn();
+      if (successMessage) this.toast(successMessage, 'success');
+      return result ?? true;
+    } catch (err) {
+      this.toast(err.fullMessage || err.message, 'error');
+      return null;
+    }
+  },
+
+  // SECTION: signed liters for ledgers, e.g. +5,000.0 L / −120.5 L
+  signedLiters(n) {
+    const v = Number(n);
+    return `${v > 0 ? '+' : v < 0 ? '−' : ''}${this.formatNumber(Math.abs(v), 1)} L`;
+  },
+
+  // SECTION: placeholder shown while a page fetches data from the API
+  loadingState(label = 'Loading...') {
+    return `<div class="page-section flex items-center justify-center gap-3 py-16 text-outline">
+      <span class="material-symbols-outlined animate-spin">progress_activity</span><span>${this.escapeHtml(label)}</span></div>`;
+  },
+
+  // SECTION: error panel with retry; retryJs is an inline handler string such as "UsersPage.reload()"
+  errorState(message, retryJs) {
+    return `<div class="page-section py-12 text-center">
+      <span class="material-symbols-outlined text-error text-4xl">cloud_off</span>
+      <p class="font-semibold mt-2">Could not load data</p>
+      <p class="text-sm text-outline mt-1">${this.escapeHtml(message)}</p>
+      ${retryJs ? `<button onclick="${retryJs}" class="mt-4 px-4 py-2 border border-outline-variant rounded-lg text-body-md hover:bg-surface-container-low">Try again</button>` : ''}
+    </div>`;
   },
 };

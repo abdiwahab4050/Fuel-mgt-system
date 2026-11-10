@@ -1,0 +1,16 @@
+{
+  "name": "fuelflow-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static FuelFlow UI served by the backend. This package only builds the Tailwind stylesheets.",
+  "scripts": {
+    "build:css": "npm run build:css:app && npm run build:css:landing",
+    "build:css:app": "tailwindcss -c build/tailwind.app.config.cjs -i build/tailwind.input.css -o css/tailwind-app.css --minify",
+    "build:css:landing": "tailwindcss -c build/tailwind.landing.config.cjs -i build/tailwind.input.css -o css/tailwind-landing.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/container-queries": "0.1.1",
+    "@tailwindcss/forms": "0.5.10",
+    "tailwindcss": "3.4.17"
+  }
+}

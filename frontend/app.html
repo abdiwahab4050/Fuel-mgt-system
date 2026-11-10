@@ -7,98 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Star Fuel Station - Dashboard</title>
   <!-- EXTERNAL CDN LINKS: Tailwind CSS and Google Fonts (Inter, Geist, Material Symbols) -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Tailwind is prebuilt: run "npm run build:css" in frontend/ after changing classes -->
+  <link rel="stylesheet" href="css/tailwind-app.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <!-- CUSTOM STYLESHEET: Project-wide CSS from css/styles.css -->
   <link rel="stylesheet" href="css/styles.css"/>
-  <!-- TAILWIND CONFIG: Dashboard theme colors, spacing, typography, and border radius -->
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "tertiary-container": "#2a1700",
-            "surface-container": "#e5eeff",
-            "error": "#ba1a1a",
-            "tertiary": "#000000",
-            "surface-bright": "#f8f9ff",
-            "inverse-on-surface": "#eaf1ff",
-            "primary-fixed-dim": "#bec6e0",
-            "surface-container-high": "#dce9ff",
-            "background": "#f8f9ff",
-            "on-error": "#ffffff",
-            "on-secondary": "#ffffff",
-            "on-surface-variant": "#45464d",
-            "surface": "#f8f9ff",
-            "on-primary-fixed": "#131b2e",
-            "secondary-fixed": "#6ffbbe",
-            "on-error-container": "#93000a",
-            "surface-dim": "#cbdbf5",
-            "on-tertiary-fixed-variant": "#653e00",
-            "surface-container-lowest": "#ffffff",
-            "on-primary-fixed-variant": "#3f465c",
-            "on-secondary-fixed": "#002113",
-            "surface-tint": "#565e74",
-            "inverse-surface": "#213145",
-            "on-tertiary-container": "#b87500",
-            "outline-variant": "#c6c6cd",
-            "on-secondary-container": "#00714d",
-            "secondary": "#006c49",
-            "on-primary-container": "#7c839b",
-            "on-primary": "#ffffff",
-            "primary-fixed": "#dae2fd",
-            "secondary-container": "#6cf8bb",
-            "surface-container-highest": "#d3e4fe",
-            "error-container": "#ffdad6",
-            "on-tertiary": "#ffffff",
-            "secondary-fixed-dim": "#4edea3",
-            "on-background": "#0b1c30",
-            "surface-variant": "#d3e4fe",
-            "primary-container": "#131b2e",
-            "primary": "#000000",
-            "tertiary-fixed-dim": "#ffb95f",
-            "outline": "#76777d",
-            "on-surface": "#0b1c30",
-            "surface-container-low": "#eff4ff",
-          },
-          borderRadius: {
-            DEFAULT: "0.125rem",
-            lg: "0.25rem",
-            xl: "0.5rem",
-            full: "0.75rem",
-          },
-          spacing: {
-            "card-padding": "24px",
-            "table-cell-padding": "12px 16px",
-            gutter: "20px",
-            "sidebar-width": "280px",
-            "container-margin": "32px",
-            unit: "4px",
-          },
-          fontFamily: {
-            "body-lg": ["Inter"],
-            "data-mono": ["Geist"],
-            "headline-md": ["Geist"],
-            "label-sm": ["Geist"],
-            "body-md": ["Inter"],
-            "display-metrics": ["Geist"],
-            "headline-lg": ["Geist"],
-          },
-          fontSize: {
-            "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
-            "data-mono": ["14px", { lineHeight: "20px", letterSpacing: "-0.01em", fontWeight: "500" }],
-            "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
-            "label-sm": ["12px", { lineHeight: "16px", fontWeight: "600" }],
-            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
-            "display-metrics": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
-            "headline-lg": ["28px", { lineHeight: "36px", fontWeight: "600" }],
-          },
-        },
-      },
-    };
-  </script>
+  
 </head>
 <!-- BODY: Dashboard shell with background, typography, and overflow settings -->
 <body class="bg-background text-on-background font-body-md overflow-x-hidden">
@@ -146,9 +61,10 @@
         <span class="material-symbols-outlined text-lg">logout</span>
         <span class="hidden md:inline">Logout</span>
       </button>
-      <div class="h-8 w-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center shrink-0" id="user-avatar-wrap" title="">
+      <button type="button" id="user-avatar-btn" class="h-8 w-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center shrink-0 cursor-pointer hover:ring-2 hover:ring-secondary/40 transition-shadow" title="Edit profile picture" aria-label="Edit profile picture">
+        <img id="user-avatar-img" class="hidden h-full w-full object-cover" alt="Profile picture"/>
         <span id="user-avatar" class="text-on-secondary text-sm font-bold">A</span>
-      </div>
+      </button>
     </div>
   </header>
 
@@ -161,7 +77,7 @@
   </div>
 
   <!-- MAIN CONTENT: Dynamic page area rendered by router (dashboard, inventory, etc.) -->
-  <main id="main-content" class="main-content w-full lg:ml-[280px] mt-14 sm:mt-16 p-3 sm:p-4 md:p-8 pb-[5.5rem] lg:pb-8 max-w-[1600px] min-h-[calc(100vh-3.5rem)]"></main>
+  <main id="main-content" class="main-content w-full lg:w-[calc(100%-280px)] lg:ml-[280px] mt-14 sm:mt-16 p-3 sm:p-4 md:p-8 pb-[5.5rem] lg:pb-8 max-w-[1600px] min-h-[calc(100vh-3.5rem)]"></main>
 
   <!-- MOBILE NAV: Bottom tab bar for navigation on small screens (populated by JS) -->
   <nav id="mobile-bottom-nav" class="mobile-bottom-nav lg:hidden" aria-label="Mobile navigation"></nav>
@@ -176,17 +92,25 @@
   <!-- SCRIPT: utils.js - Utility functions used across pages -->
   <script src="js/utils.js"></script>
   <!-- SCRIPT: auth.js - Authentication and session management -->
+  <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
   <!-- SCRIPT: dashboard.js - Dashboard overview page module -->
   <script src="js/pages/dashboard.js"></script>
   <!-- SCRIPT: inventory.js - Inventory management page module -->
   <script src="js/pages/inventory.js"></script>
+  <script src="js/pages/pumps.js"></script>
   <!-- SCRIPT: suppliers.js - Suppliers page module -->
   <script src="js/pages/suppliers.js"></script>
   <!-- SCRIPT: purchases.js - Purchases page module -->
   <script src="js/pages/purchases.js"></script>
   <!-- SCRIPT: sales.js - Sales page module -->
   <script src="js/pages/sales.js"></script>
+  <script src="js/pages/customers.js"></script>
+  <script src="js/pages/invoices.js"></script>
+  <script src="js/pages/expenses.js"></script>
+  <script src="js/pages/finance.js"></script>
   <!-- SCRIPT: vehicles.js - Vehicles page module -->
   <script src="js/pages/vehicles.js"></script>
   <!-- SCRIPT: consumption.js - Fuel consumption page module -->
@@ -198,17 +122,17 @@
   <!-- SCRIPT: settings.js - Settings/profile page module -->
   <script src="js/pages/settings.js"></script>
   <!-- SCRIPT: router.js - Client-side routing and page navigation -->
-  <script src="js/router.js?v=3"></script>
+  <script src="js/router.js?v=9"></script>
   <!-- SCRIPT: app.js - Main app bootstrap, sidebar, header, and event wiring -->
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=9"></script>
   <!-- FALLBACK ERROR SCRIPT: Show setup instructions if core scripts fail to load -->
   <script>
     if (typeof Router === 'undefined' || typeof Store === 'undefined') {
       document.getElementById('main-content').innerHTML =
         '<div class="page-section p-6"><h2 class="text-error font-bold">Scripts failed to load</h2>' +
-        '<p class="mt-2">Open this app from the <code>frontend</code> folder using a local server:</p>' +
-        '<pre class="mt-2 p-3 bg-surface-container-low rounded text-sm">cd frontend\nnpx serve .</pre>' +
-        '<p class="mt-2">Then go to <strong>/index.html</strong> to log in.</p></div>';
+        '<p class="mt-2">Start the backend, which also serves this app:</p>' +
+        '<pre class="mt-2 p-3 bg-surface-container-low rounded text-sm">cd backend\nnpm run dev</pre>' +
+        '<p class="mt-2">Then open <strong>http://localhost:4000</strong> to log in.</p></div>';
     }
   </script>
 </body>

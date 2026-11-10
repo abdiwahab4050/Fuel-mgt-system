@@ -11,9 +11,14 @@ const Router = {
   pages: {
     dashboard: { title: 'Dashboard Overview', module: DashboardPage, icon: 'dashboard', mobileLabel: 'Home' },
     inventory: { title: 'Fuel Inventory', module: InventoryPage, icon: 'storage', mobileLabel: 'Stock' },
+    pumps: { title: 'Stations & Pumps', module: PumpsPage, icon: 'local_gas_station', mobileLabel: 'Pumps' },
     suppliers: { title: 'Suppliers', module: SuppliersPage, icon: 'business', mobileLabel: 'Suppliers' },
     purchases: { title: 'Purchases', module: PurchasesPage, icon: 'shopping_cart', mobileLabel: 'Buy' },
-    sales: { title: 'Sales', module: SalesPage, icon: 'receipt_long', mobileLabel: 'Sales' },
+    sales: { title: 'Sales', module: SalesPage, icon: 'point_of_sale', mobileLabel: 'Sales' },
+    customers: { title: 'Customers', module: CustomersPage, icon: 'groups', mobileLabel: 'Customers' },
+    invoices: { title: 'Billing & Invoices', module: InvoicesPage, icon: 'receipt_long', mobileLabel: 'Billing' },
+    expenses: { title: 'Expenses', module: ExpensesPage, icon: 'payments', mobileLabel: 'Expenses' },
+    finance: { title: 'Finance', module: FinancePage, icon: 'account_balance', mobileLabel: 'Finance' },
     vehicles: { title: 'Fleet Management', module: VehiclesPage, icon: 'local_shipping', mobileLabel: 'Fleet' },
     consumption: { title: 'Fuel Consumption', module: ConsumptionPage, icon: 'speed', mobileLabel: 'Usage' },
     reports: { title: 'Reports', module: ReportsPage, icon: 'assessment', mobileLabel: 'Reports' },
@@ -25,9 +30,14 @@ const Router = {
   navItems: [
     { page: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { page: 'inventory', label: 'Inventory', icon: 'storage' },
+    { page: 'pumps', label: 'Stations & Pumps', icon: 'local_gas_station' },
     { page: 'suppliers', label: 'Suppliers', icon: 'business' },
     { page: 'purchases', label: 'Purchases', icon: 'shopping_cart' },
-    { page: 'sales', label: 'Sales', icon: 'receipt_long' },
+    { page: 'sales', label: 'Sales', icon: 'point_of_sale' },
+    { page: 'customers', label: 'Customers', icon: 'groups' },
+    { page: 'invoices', label: 'Billing & Invoices', icon: 'receipt_long' },
+    { page: 'expenses', label: 'Expenses', icon: 'payments' },
+    { page: 'finance', label: 'Finance', icon: 'account_balance' },
     { page: 'vehicles', label: 'Fleet', icon: 'local_shipping' },
     { page: 'consumption', label: 'Consumption', icon: 'speed' },
     { page: 'reports', label: 'Reports', icon: 'assessment' },
@@ -78,14 +88,23 @@ const Router = {
   // SECTION: validates page key and role access; returns safe fallback page when denied or unknown
   resolvePage(page) {
     const session = Auth.getSession();
-    if (!session) return 'dashboard';
-    if (!this.pages[page]) return 'dashboard';
+    const home = this.homePage();
+    if (!session) return home;
+    if (!this.pages[page]) return home;
 
     if (!Utils.canAccess(session.role, page)) {
-      Utils.toast('Access denied for this section', 'error');
-      return 'dashboard';
+      if (page !== 'dashboard') Utils.toast('Access denied for this section', 'error');
+      return home;
     }
     return page;
+  },
+
+  // SECTION: landing page — dashboard when permitted, otherwise the first page the role can open
+  homePage() {
+    const session = Auth.getSession();
+    if (!session) return 'dashboard';
+    if (session.role === 'customer') return 'invoices'; // customers land on "My Account"
+    return this.navItems.find((i) => Utils.canAccess(session.role, i.page))?.page || 'settings';
   },
 
   // SECTION: main navigation entry — updates hash, renders module, runs afterRender; change render pipeline here
@@ -96,8 +115,18 @@ const Router = {
       return;
     }
 
+    // SECTION: optional query in the hash (e.g. #invoices?payment=ID after a card checkout)
+    if (typeof page === 'string' && page.includes('?')) {
+      const [p, q] = page.split('?');
+      page = p;
+      this.hashParams = new URLSearchParams(q);
+    }
     page = this.resolvePage(page);
+    // SECTION: pages that load API data reset their cache when the user navigates to them
+    const entering = page !== this.currentPage || !this._started;
+    this._started = true;
     this.currentPage = page;
+    if (entering) this.pages[page]?.module?.onEnter?.();
 
     // SECTION: sync URL hash without re-triggering hashchange handler
     if (updateHash) {
@@ -156,10 +185,7 @@ const Router = {
     const session = Auth.getSession();
     if (!session) return this.navItems.filter((i) => i.page === 'dashboard');
 
-    return this.navItems.filter((item) => {
-      if (item.adminOnly && session.role !== 'admin') return false;
-      return Utils.canAccess(session.role, item.page);
-    });
+    return this.navItems.filter((item) => Utils.canAccess(session.role, item.page));
   },
 
   // SECTION: applies active styles to sidebar links matching currentPage; change CSS classes here
