@@ -1,0 +1,11 @@
+**/node_modules
+**/.env
+**/.env.*
+!backend/.env.example
+!backend/.env.production.example
+.git
+.claude
+fuel-management
+design-reference
+**/*.log
+**/coverage

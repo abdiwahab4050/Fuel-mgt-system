@@ -1,0 +1,954 @@
+// FuelFlow ERP — relational schema (PostgreSQL)
+//
+// Conventions:
+//  - Money columns: Decimal(14,2). Liters / meter readings: Decimal(14,3). Unit prices: Decimal(12,4).
+//  - Balances (customer, supplier) are derived from invoices/payments, never stored, so they cannot drift.
+//  - Every financial or stock change writes a row to a ledger table (StockMovement, Payment,
+//    PaymentTransaction, Refund) plus an AuditLog entry.
+//  - Card data: only brand + last 4 digits are ever stored. No PAN, no CVV.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EquipmentStatus {
+  ACTIVE
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum StockMovementType {
+  OPENING
+  DELIVERY
+  SALE
+  SALE_REVERSAL
+  ADJUSTMENT
+  LOSS
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  RECONCILED
+}
+
+enum PumpReadingStatus {
+  OPEN
+  CLOSED
+  RECONCILED
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum SupplierInvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum CustomerType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum SaleStatus {
+  COMPLETED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  ZAAD
+  EDAHAB
+  MASTERCARD
+  CREDIT_ACCOUNT
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentEventType {
+  INITIATE
+  STATUS_CHECK
+  CALLBACK
+  REFUND
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+enum ExpenseType {
+  OPERATIONAL
+  EMPLOYEE
+  MAINTENANCE
+  UTILITY
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  DANGER
+}
+
+// ─────────────────────────────────────────────────────────────
+// ACCESS CONTROL
+// ─────────────────────────────────────────────────────────────
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // super_admin, station_manager, cashier, attendant, accountant, customer
+  name        String
+  description String?
+  isSystem    Boolean          @default(true)
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique // e.g. "sales.create", "payments.refund"
+  module      String
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  phone        String?
+  avatarUrl    String?
+  status       UserStatus @default(ACTIVE)
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  stationId    String? // null = all stations (super admin / accountant)
+  station      Station?   @relation(fields: [stationId], references: [id])
+  lastLoginAt  DateTime?
+  notificationsSeenAt DateTime? // station-wide/global notifications older than this count as read
+  failedLogins Int        @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  sessions        Session[]
+  employee        Employee?
+  customer        Customer? // set when the user is a customer-portal login
+  shifts          Shift[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  salesAsCashier  Sale[]             @relation("SaleCashier")
+  discountsGiven  Sale[]             @relation("SaleDiscountApprover")
+  paymentsTaken   Payment[]
+  refundsAsked    Refund[]           @relation("RefundRequester")
+  refundsApproved Refund[]           @relation("RefundApprover")
+  adjustmentsAsk  StockAdjustment[]  @relation("AdjustmentRequester")
+  adjustmentsOk   StockAdjustment[]  @relation("AdjustmentApprover")
+  movements       StockMovement[]
+  deliveries      FuelDelivery[]
+  purchaseOrders  PurchaseOrder[]
+  expenses        Expense[]          @relation("ExpenseRecorder")
+  expensesOk      Expense[]          @relation("ExpenseApprover")
+  supplierPays    SupplierPayment[]
+  pumpReadings    PumpReading[]      @relation("ReadingRecorder")
+  reconciliations PumpReading[]      @relation("ReadingReconciler")
+  tankRecords     TankStockRecord[]
+  consumption     FuelConsumption[]
+  priceChanges    FuelPriceHistory[]
+  settings        Setting[]
+
+  @@index([roleId])
+  @@index([stationId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // SHA-256 of the cookie token; raw token is never stored
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// STATIONS, EQUIPMENT, STAFF
+// ─────────────────────────────────────────────────────────────
+
+model Station {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  users          User[]
+  employees      Employee[]
+  tanks          Tank[]
+  pumps          Pump[]
+  shifts         Shift[]
+  sales          Sale[]
+  invoices       Invoice[]
+  purchaseOrders PurchaseOrder[]
+  expenses       Expense[]
+  notifications  Notification[]
+}
+
+model Employee {
+  id         String       @id @default(cuid())
+  employeeNo String       @unique
+  fullName   String
+  position   String
+  phone      String?
+  hireDate   DateTime?    @db.Date
+  salary     Decimal?     @db.Decimal(14, 2)
+  status     RecordStatus @default(ACTIVE)
+  stationId  String
+  station    Station      @relation(fields: [stationId], references: [id])
+  userId     String?      @unique
+  user       User?        @relation(fields: [userId], references: [id])
+  expenses   Expense[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([stationId])
+}
+
+model FuelProduct {
+  id            String       @id @default(cuid())
+  code          String       @unique // PETROL, DIESEL, ...
+  name          String
+  unit          String       @default("L")
+  sellingPrice  Decimal      @db.Decimal(12, 4)
+  costPrice     Decimal      @default(0) @db.Decimal(12, 4)
+  status        RecordStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  tanks         Tank[]
+  priceHistory  FuelPriceHistory[]
+  saleItems     SaleItem[]
+  orderItems    PurchaseOrderItem[]
+  deliveries    FuelDelivery[]
+  consumption   FuelConsumption[]
+}
+
+model FuelPriceHistory {
+  id           String      @id @default(cuid())
+  productId    String
+  product      FuelProduct @relation(fields: [productId], references: [id])
+  sellingPrice Decimal     @db.Decimal(12, 4)
+  costPrice    Decimal     @db.Decimal(12, 4)
+  changedById  String
+  changedBy    User        @relation(fields: [changedById], references: [id])
+  effectiveAt  DateTime    @default(now())
+
+  @@index([productId, effectiveAt])
+}
+
+model Tank {
+  id             String          @id @default(cuid())
+  code           String
+  name           String?
+  stationId      String
+  station        Station         @relation(fields: [stationId], references: [id])
+  productId      String
+  product        FuelProduct     @relation(fields: [productId], references: [id])
+  capacityLiters Decimal         @db.Decimal(14, 3)
+  currentLiters  Decimal         @default(0) @db.Decimal(14, 3) // kept in sync with StockMovement in the same DB transaction
+  minLevelLiters Decimal         @default(0) @db.Decimal(14, 3)
+  status         EquipmentStatus @default(ACTIVE)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  nozzles      Nozzle[]
+  movements    StockMovement[]
+  adjustments  StockAdjustment[]
+  stockRecords TankStockRecord[]
+  deliveries   FuelDelivery[]
+  saleItems    SaleItem[]
+
+  @@unique([stationId, code])
+  @@index([productId])
+}
+
+model Pump {
+  id          String           @id @default(cuid())
+  code        String
+  name        String?
+  stationId   String
+  station     Station          @relation(fields: [stationId], references: [id])
+  status      EquipmentStatus  @default(ACTIVE)
+  nozzles     Nozzle[]
+  assignments PumpAssignment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([stationId, code])
+}
+
+model Nozzle {
+  id           String          @id @default(cuid())
+  code         String
+  pumpId       String
+  pump         Pump            @relation(fields: [pumpId], references: [id])
+  tankId       String // fuel product is the tank's product
+  tank         Tank            @relation(fields: [tankId], references: [id])
+  currentMeter Decimal         @default(0) @db.Decimal(14, 3)
+  status       EquipmentStatus @default(ACTIVE)
+  readings     PumpReading[]
+  saleItems    SaleItem[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([pumpId, code])
+  @@index([tankId])
+}
+
+model Shift {
+  id          String           @id @default(cuid())
+  stationId   String
+  station     Station          @relation(fields: [stationId], references: [id])
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+  startedAt   DateTime         @default(now())
+  endedAt     DateTime?
+  status      ShiftStatus      @default(OPEN)
+  notes       String?
+  assignments PumpAssignment[]
+  readings    PumpReading[]
+  sales       Sale[]
+
+  @@index([stationId, startedAt])
+  @@index([userId, status])
+}
+
+model PumpAssignment {
+  shiftId String
+  pumpId  String
+  shift   Shift  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  pump    Pump   @relation(fields: [pumpId], references: [id])
+
+  @@id([shiftId, pumpId])
+}
+
+model PumpReading {
+  id              String            @id @default(cuid())
+  nozzleId        String
+  nozzle          Nozzle            @relation(fields: [nozzleId], references: [id])
+  shiftId         String?
+  shift           Shift?            @relation(fields: [shiftId], references: [id])
+  readingDate     DateTime          @db.Date
+  openingMeter    Decimal           @db.Decimal(14, 3)
+  closingMeter    Decimal?          @db.Decimal(14, 3)
+  meterLiters     Decimal?          @db.Decimal(14, 3) // closing - opening
+  recordedLiters  Decimal?          @db.Decimal(14, 3) // sum of sale items on this nozzle in the period
+  varianceLiters  Decimal?          @db.Decimal(14, 3) // meter - recorded
+  status          PumpReadingStatus @default(OPEN)
+  notes           String?
+  recordedById    String
+  recordedBy      User              @relation("ReadingRecorder", fields: [recordedById], references: [id])
+  reconciledById  String?
+  reconciledBy    User?             @relation("ReadingReconciler", fields: [reconciledById], references: [id])
+  reconciledAt    DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([nozzleId, readingDate])
+  @@index([shiftId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// INVENTORY LEDGER
+// ─────────────────────────────────────────────────────────────
+
+model StockMovement {
+  id            String            @id @default(cuid())
+  tankId        String
+  tank          Tank              @relation(fields: [tankId], references: [id])
+  type          StockMovementType
+  quantity      Decimal           @db.Decimal(14, 3) // signed: + into tank, - out of tank
+  balanceAfter  Decimal           @db.Decimal(14, 3)
+  unitCost      Decimal?          @db.Decimal(12, 4)
+  referenceType String? // Sale, FuelDelivery, StockAdjustment, Refund ...
+  referenceId   String?
+  note          String?
+  createdById   String
+  createdBy     User              @relation(fields: [createdById], references: [id])
+  createdAt     DateTime          @default(now())
+
+  @@index([tankId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+model StockAdjustment {
+  id            String         @id @default(cuid())
+  tankId        String
+  tank          Tank           @relation(fields: [tankId], references: [id])
+  isLoss        Boolean        @default(false)
+  quantity      Decimal        @db.Decimal(14, 3) // signed
+  reason        String
+  status        ApprovalStatus @default(PENDING)
+  requestedById String
+  requestedBy   User           @relation("AdjustmentRequester", fields: [requestedById], references: [id])
+  approvedById  String?
+  approvedBy    User?          @relation("AdjustmentApprover", fields: [approvedById], references: [id])
+  decidedAt     DateTime?
+  createdAt     DateTime       @default(now())
+
+  @@index([tankId, status])
+}
+
+model TankStockRecord {
+  id             String   @id @default(cuid())
+  tankId         String
+  tank           Tank     @relation(fields: [tankId], references: [id])
+  recordDate     DateTime @db.Date
+  openingLiters  Decimal  @db.Decimal(14, 3)
+  closingLiters  Decimal? @db.Decimal(14, 3) // physical dip at close
+  bookLiters     Decimal? @db.Decimal(14, 3) // tank.currentLiters at close
+  varianceLiters Decimal? @db.Decimal(14, 3) // physical - book
+  recordedById   String
+  recordedBy     User     @relation(fields: [recordedById], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tankId, recordDate])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUPPLIERS & PURCHASING
+// ─────────────────────────────────────────────────────────────
+
+model Supplier {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  taxId         String?
+  status        RecordStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+  deliveries     FuelDelivery[]
+  invoices       SupplierInvoice[]
+  payments       SupplierPayment[]
+}
+
+model PurchaseOrder {
+  id           String              @id @default(cuid())
+  orderNo      String              @unique
+  supplierId   String
+  supplier     Supplier            @relation(fields: [supplierId], references: [id])
+  stationId    String
+  station      Station             @relation(fields: [stationId], references: [id])
+  status       PurchaseOrderStatus @default(DRAFT)
+  orderDate    DateTime            @default(now())
+  expectedDate DateTime?
+  totalAmount  Decimal             @default(0) @db.Decimal(14, 2)
+  notes        String?
+  createdById  String
+  createdBy    User                @relation(fields: [createdById], references: [id])
+  items        PurchaseOrderItem[]
+  deliveries   FuelDelivery[]
+  invoices     SupplierInvoice[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([supplierId, orderDate])
+  @@index([stationId, status])
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         FuelProduct   @relation(fields: [productId], references: [id])
+  quantity        Decimal       @db.Decimal(14, 3)
+  unitCost        Decimal       @db.Decimal(12, 4)
+  lineTotal       Decimal       @db.Decimal(14, 2)
+
+  @@index([purchaseOrderId])
+}
+
+model FuelDelivery {
+  id                String         @id @default(cuid())
+  deliveryNo        String         @unique
+  purchaseOrderId   String?
+  purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  supplierId        String
+  supplier          Supplier       @relation(fields: [supplierId], references: [id])
+  tankId            String
+  tank              Tank           @relation(fields: [tankId], references: [id])
+  productId         String
+  product           FuelProduct    @relation(fields: [productId], references: [id])
+  quantityDelivered Decimal        @db.Decimal(14, 3)
+  unitCost          Decimal        @db.Decimal(12, 4)
+  totalCost         Decimal        @db.Decimal(14, 2)
+  deliveryDate      DateTime
+  status            DeliveryStatus @default(PENDING)
+  receivedById      String
+  receivedBy        User           @relation(fields: [receivedById], references: [id])
+  confirmedAt       DateTime?
+  notes             String?
+  createdAt         DateTime       @default(now())
+
+  @@index([supplierId, deliveryDate])
+  @@index([status, deliveryDate])
+  @@index([tankId])
+}
+
+model SupplierInvoice {
+  id              String                @id @default(cuid())
+  supplierId      String
+  supplier        Supplier              @relation(fields: [supplierId], references: [id])
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
+  invoiceNumber   String // the supplier's own number
+  issueDate       DateTime              @db.Date
+  dueDate         DateTime?             @db.Date
+  amount          Decimal               @db.Decimal(14, 2)
+  amountPaid      Decimal               @default(0) @db.Decimal(14, 2)
+  status          SupplierInvoiceStatus @default(UNPAID)
+  payments        SupplierPayment[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@unique([supplierId, invoiceNumber])
+  @@index([status, dueDate])
+}
+
+model SupplierPayment {
+  id                String           @id @default(cuid())
+  paymentNo         String           @unique
+  supplierId        String
+  supplier          Supplier         @relation(fields: [supplierId], references: [id])
+  supplierInvoiceId String?
+  supplierInvoice   SupplierInvoice? @relation(fields: [supplierInvoiceId], references: [id])
+  amount            Decimal          @db.Decimal(14, 2)
+  method            PaymentMethod
+  reference         String?
+  paidAt            DateTime
+  recordedById      String
+  recordedBy        User             @relation(fields: [recordedById], references: [id])
+  createdAt         DateTime         @default(now())
+
+  @@index([supplierId, paidAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOMERS, SALES, BILLING, PAYMENTS
+// ─────────────────────────────────────────────────────────────
+
+model Customer {
+  id            String       @id @default(cuid())
+  customerNo    String       @unique
+  type          CustomerType @default(INDIVIDUAL)
+  name          String
+  phone         String?
+  email         String?
+  address       String?
+  creditAllowed Boolean      @default(false)
+  creditLimit   Decimal      @default(0) @db.Decimal(14, 2)
+  status        RecordStatus @default(ACTIVE)
+  userId        String?      @unique // customer-portal login
+  user          User?        @relation(fields: [userId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sales    Sale[]
+  invoices Invoice[]
+  payments Payment[]
+  vehicles Vehicle[]
+
+  @@index([name])
+  @@index([phone])
+}
+
+model Sale {
+  id                   String     @id @default(cuid())
+  saleNo               String     @unique
+  idempotencyKey       String?    @unique // client-generated; blocks double submission
+  stationId            String
+  station              Station    @relation(fields: [stationId], references: [id])
+  customerId           String? // null = walk-in
+  customer             Customer?  @relation(fields: [customerId], references: [id])
+  walkInName           String?
+  walkInPhone          String?
+  cashierId            String
+  cashier              User       @relation("SaleCashier", fields: [cashierId], references: [id])
+  shiftId              String?
+  shift                Shift?     @relation(fields: [shiftId], references: [id])
+  subtotal             Decimal    @db.Decimal(14, 2)
+  discountTotal        Decimal    @default(0) @db.Decimal(14, 2)
+  discountApprovedById String?
+  discountApprovedBy   User?      @relation("SaleDiscountApprover", fields: [discountApprovedById], references: [id])
+  taxTotal             Decimal    @default(0) @db.Decimal(14, 2)
+  total                Decimal    @db.Decimal(14, 2)
+  status               SaleStatus @default(COMPLETED)
+  saleDate             DateTime   @default(now())
+  notes                String?
+  items                SaleItem[]
+  invoice              Invoice?
+  refunds              Refund[]
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  @@index([stationId, saleDate])
+  @@index([customerId, saleDate])
+  @@index([cashierId, saleDate])
+}
+
+model SaleItem {
+  id               String      @id @default(cuid())
+  saleId           String
+  sale             Sale        @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId        String
+  product          FuelProduct @relation(fields: [productId], references: [id])
+  tankId           String
+  tank             Tank        @relation(fields: [tankId], references: [id])
+  nozzleId         String?
+  nozzle           Nozzle?     @relation(fields: [nozzleId], references: [id])
+  quantity         Decimal     @db.Decimal(14, 3)
+  unitPrice        Decimal     @db.Decimal(12, 4)
+  discount         Decimal     @default(0) @db.Decimal(14, 2)
+  lineTotal        Decimal     @db.Decimal(14, 2) // quantity × unitPrice − discount
+  refundedQuantity Decimal     @default(0) @db.Decimal(14, 3)
+
+  @@index([saleId])
+  @@index([nozzleId])
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  invoiceNo  String        @unique
+  saleId     String?       @unique
+  sale       Sale?         @relation(fields: [saleId], references: [id])
+  customerId String?
+  customer   Customer?     @relation(fields: [customerId], references: [id])
+  stationId  String
+  station    Station       @relation(fields: [stationId], references: [id])
+  currency   String        @default("USD")
+  issueDate  DateTime      @default(now())
+  dueDate    DateTime?
+  subtotal   Decimal       @db.Decimal(14, 2)
+  discount   Decimal       @default(0) @db.Decimal(14, 2)
+  taxRate    Decimal       @default(0) @db.Decimal(6, 3) // percent, snapshot at issue time
+  tax        Decimal       @default(0) @db.Decimal(14, 2)
+  total      Decimal       @db.Decimal(14, 2)
+  amountPaid Decimal       @default(0) @db.Decimal(14, 2) // updated only inside payment/refund transactions
+  status     InvoiceStatus @default(UNPAID)
+  payments   Payment[]
+  refunds    Refund[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([customerId, status])
+  @@index([stationId, issueDate])
+  @@index([status])
+  @@index([status, dueDate])
+}
+
+model Payment {
+  id                String               @id @default(cuid())
+  paymentNo         String               @unique
+  reference         String               @unique // our merchant reference sent to the provider
+  idempotencyKey    String               @unique
+  invoiceId         String
+  invoice           Invoice              @relation(fields: [invoiceId], references: [id])
+  customerId        String?
+  customer          Customer?            @relation(fields: [customerId], references: [id])
+  method            PaymentMethod
+  amount            Decimal              @db.Decimal(14, 2)
+  currency          String               @default("USD")
+  status            PaymentStatus        @default(PENDING)
+  providerReference String? // provider transaction id, set only from server-side verification
+  payerPhone        String? // ZAAD / eDAHAB
+  cardBrand         String? // Mastercard: brand + last4 only
+  cardLast4         String?
+  failureReason     String?
+  initiatedById     String?
+  initiatedBy       User?                @relation(fields: [initiatedById], references: [id])
+  verifiedAt        DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  events            PaymentTransaction[]
+  refunds           Refund[]
+
+  @@unique([method, providerReference])
+  @@index([invoiceId])
+  @@index([status, createdAt])
+  @@index([method, createdAt])
+  @@index([verifiedAt])
+}
+
+model PaymentTransaction {
+  id             String           @id @default(cuid())
+  paymentId      String
+  payment        Payment          @relation(fields: [paymentId], references: [id])
+  type           PaymentEventType
+  providerStatus String?
+  httpStatus     Int?
+  request        Json? // sanitized: no secrets, no card data
+  response       Json?
+  createdAt      DateTime         @default(now())
+
+  @@index([paymentId, createdAt])
+}
+
+model WebhookEvent {
+  id             String    @id @default(cuid())
+  provider       PaymentMethod
+  eventId        String // provider's event / transaction id — dedupe key
+  signatureValid Boolean
+  payload        Json
+  processedAt    DateTime?
+  error          String?
+  receivedAt     DateTime  @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model Refund {
+  id                String       @id @default(cuid())
+  refundNo          String       @unique
+  invoiceId         String
+  invoice           Invoice      @relation(fields: [invoiceId], references: [id])
+  saleId            String?
+  sale              Sale?        @relation(fields: [saleId], references: [id])
+  paymentId         String?
+  payment           Payment?     @relation(fields: [paymentId], references: [id])
+  amount            Decimal      @db.Decimal(14, 2)
+  returnToStock     Boolean      @default(false)
+  reason            String
+  status            RefundStatus @default(PENDING)
+  providerReference String?
+  requestedById     String
+  requestedBy       User         @relation("RefundRequester", fields: [requestedById], references: [id])
+  approvedById      String?
+  approvedBy        User?        @relation("RefundApprover", fields: [approvedById], references: [id])
+  decidedAt         DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([decidedAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// FLEET (preserved from the original frontend)
+// ─────────────────────────────────────────────────────────────
+
+model Vehicle {
+  id                 String            @id @default(cuid())
+  registrationNumber String            @unique
+  name               String
+  type               String
+  driver             String?
+  department         String?
+  status             EquipmentStatus   @default(ACTIVE)
+  customerId         String? // fleet customer that owns the vehicle, if any
+  customer           Customer?         @relation(fields: [customerId], references: [id])
+  consumption        FuelConsumption[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model FuelConsumption {
+  id              String      @id @default(cuid())
+  vehicleId       String
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
+  productId       String
+  product         FuelProduct @relation(fields: [productId], references: [id])
+  driver          String?
+  quantity        Decimal     @db.Decimal(14, 3)
+  mileage         Decimal?    @db.Decimal(10, 3) // km per liter
+  odometerReading Decimal?    @db.Decimal(14, 1)
+  date            DateTime    @db.Date
+  recordedById    String
+  recordedBy      User        @relation(fields: [recordedById], references: [id])
+  createdAt       DateTime    @default(now())
+
+  @@index([vehicleId, date])
+  @@index([date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXPENSES
+// ─────────────────────────────────────────────────────────────
+
+model ExpenseCategory {
+  id       String      @id @default(cuid())
+  name     String      @unique
+  type     ExpenseType
+  expenses Expense[]
+}
+
+model Expense {
+  id            String          @id @default(cuid())
+  expenseNo     String          @unique
+  stationId     String
+  station       Station         @relation(fields: [stationId], references: [id])
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  employeeId    String? // for employee-related expenses
+  employee      Employee?       @relation(fields: [employeeId], references: [id])
+  amount        Decimal         @db.Decimal(14, 2)
+  description   String
+  vendor        String?
+  method        PaymentMethod   @default(CASH)
+  expenseDate   DateTime        @db.Date
+  status        ApprovalStatus  @default(APPROVED)
+  recordedById  String
+  recordedBy    User            @relation("ExpenseRecorder", fields: [recordedById], references: [id])
+  approvedById  String?
+  approvedBy    User?           @relation("ExpenseApprover", fields: [approvedById], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([stationId, expenseDate])
+  @@index([status, expenseDate])
+  @@index([categoryId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SYSTEM
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType @default(INFO)
+  title     String
+  message   String
+  link      String?
+  userId    String? // null + stationId = station-wide; both null = everyone with access
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stationId String?
+  station   Station?         @relation(fields: [stationId], references: [id])
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@index([stationId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String // e.g. "sale.create", "payment.verified", "refund.approve"
+  entityType String?
+  entityId   String?
+  details    String?
+  before     Json?
+  after      Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model Setting {
+  key         String   @id // company.name, invoice.taxRate, currency.code ...
+  value       Json
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id])
+  updatedAt   DateTime @updatedAt
+}
+
+// Atomic document numbering (SAL-2026-000001, INV-..., PAY-...)
+model DocumentCounter {
+  key   String @id // "<prefix>:<year>"
+  value Int    @default(0)
+}

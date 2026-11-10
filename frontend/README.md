@@ -4,27 +4,33 @@ A modern, responsive Fuel Management System built with **HTML, CSS, and JavaScri
 
 ## Quick Start
 
-1. Open `index.html` in a browser (or serve the `frontend` folder with any static server).
-2. Sign in with a demo account (see below).
-3. Explore all modules from the sidebar navigation.
-
-### Using a Local Server (recommended)
+The backend API now serves this frontend, and it handles login, users and the dashboard. Opening `index.html` directly from disk no longer works.
 
 ```bash
-cd frontend
-npx serve .
-# or: python -m http.server 8080
+cd backend
+npm run dev
 ```
 
-Then visit `http://localhost:3000` (or `:8080`).
+Then visit `http://localhost:4000`. See `backend/README.md` for database setup and the demo accounts. There are 6 roles: Super Administrator, Station Manager, Cashier, Fuel Attendant, Accountant and Customer.
 
-## Demo Accounts
+### Migration status
 
-| Role | Email | Password |
-|------|-------|----------|
-| Administrator | admin@fuelflow.com | admin123 |
-| Fuel Attendant | attendant@fuelflow.com | attendant123 |
-| Fleet Manager | fleet@fuelflow.com | fleet123 |
+| Module | Data source |
+|--------|-------------|
+| Login, sessions, profile, password | API |
+| Users and roles | API |
+| Dashboard, notifications | API |
+| Inventory: tanks, products, ledger, adjustments, transfers, dips | API |
+| Stations, pumps, nozzles, shifts, meter readings, reconciliation | API |
+| Sales (POS), customers, invoices, payments (cash and bank), refunds, statements | API |
+| ZAAD, eDAHAB, Mastercard payments | API. **Sandbox only**: live adapters need provider docs and credentials (see `backend/PAYMENTS.md`) |
+| Company, branding, currency, tax and billing settings | API |
+| Suppliers, purchase orders, deliveries, supplier invoices and payments | API |
+| Expenses (with approval), employees, finance (profit and loss, cash flow, aging) | API |
+| Fleet vehicles, fuel consumption and efficiency | API |
+| Reports (14) with Excel, CSV and print/PDF export; daily alerts | API |
+
+No module uses browser `localStorage` for business data any more. `store.js` remains only for the public landing page demo data and as a currency/brand fallback if settings fail to load.
 
 ## Modules
 
@@ -65,6 +71,7 @@ frontend/
 ├── index.html          # Login page
 ├── app.html            # Main SPA shell
 ├── css/styles.css      # Custom styles & components
+├── css/tailwind-*.css  # Prebuilt Tailwind (npm run build:css; configs in build/)
 ├── js/
 │   ├── store.js        # Data layer + seed data
 │   ├── auth.js         # Session management

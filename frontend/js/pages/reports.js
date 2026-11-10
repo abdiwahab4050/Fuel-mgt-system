@@ -1,246 +1,249 @@
 /**
  * Reports Page
  */
-// SECTION: Reports page object — tabbed analytics with period filters and CSV export; add tabs or report types here
+// SECTION: Reports page object — report catalogue, period filters, table/chart rendering, Excel/CSV/PDF export
 const ReportsPage = {
-  activeTab: 'financial',
-  dateFrom: '',
-  dateTo: '',
-  period: 'monthly',
+  catalogue: null,
+  canExport: false,
+  current: null, // report key
+  preset: 'month',
+  from: '',
+  to: '',
+  groupBy: 'day',
+  search: '',
+  data: null,
+  loadingReport: false,
+  error: null,
 
-  // SECTION: render — report shell with period controls, tabs, and active tab content; change tab list or layout here
-  render() {
-    // SECTION: tab definitions — available report categories; add new tab ids and labels here
-    const tabs = [
-      { id: 'financial', label: 'Financial' },
-      { id: 'stock', label: 'Stock' },
-      { id: 'purchases', label: 'Purchases' },
-      { id: 'sales', label: 'Sales' },
-      { id: 'vehicles', label: 'Vehicles' },
-      { id: 'consumption', label: 'Consumption' },
-      { id: 'audit', label: 'Audit Logs' },
-    ];
-
-    return `
-      <div class="page-header">
-        <div>
-          <h2 class="text-headline-lg font-headline-lg">Reports & Analytics</h2>
-          <p class="text-body-md text-outline mt-1">Generate reports with filters and export options</p>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-4 mb-6">
-        <select id="rep-period" class="form-input w-auto">
-          <option value="daily" ${this.period === 'daily' ? 'selected' : ''}>Daily</option>
-          <option value="weekly" ${this.period === 'weekly' ? 'selected' : ''}>Weekly</option>
-          <option value="monthly" ${this.period === 'monthly' ? 'selected' : ''}>Monthly</option>
-          <option value="custom" ${this.period === 'custom' ? 'selected' : ''}>Custom Range</option>
-        </select>
-        <input id="rep-from" type="date" class="form-input w-auto ${this.period !== 'custom' ? 'hidden' : ''}" value="${this.dateFrom}"/>
-        <input id="rep-to" type="date" class="form-input w-auto ${this.period !== 'custom' ? 'hidden' : ''}" value="${this.dateTo}"/>
-        <button onclick="ReportsPage.exportCurrent()" class="px-4 py-2 bg-primary text-on-primary rounded-lg flex items-center gap-2">
-          <span class="material-symbols-outlined text-lg">download</span> Export CSV
-        </button>
-      </div>
-
-      <div class="tab-list">
-        ${tabs.map((t) => `<button class="tab-btn ${this.activeTab === t.id ? 'active' : ''}" onclick="ReportsPage.switchTab('${t.id}')">${t.label}</button>`).join('')}
-      </div>
-
-      <div class="page-section">${this.renderTabContent()}</div>
-    `;
+  onEnter() {
+    this.catalogue = null;
+    this.data = null;
+    this.error = null;
   },
 
-  // SECTION: getDateRange — resolves from/to dates from period preset or custom inputs; adjust week/month boundaries here
-  getDateRange() {
-    const today = new Date();
-    let from, to;
-    to = Utils.today();
-
-    if (this.period === 'daily') {
-      from = to;
-    } else if (this.period === 'weekly') {
-      const d = new Date(today);
-      d.setDate(d.getDate() - 7);
-      from = d.toISOString().split('T')[0];
-    } else if (this.period === 'monthly') {
-      from = to.slice(0, 7) + '-01';
-    } else {
-      from = this.dateFrom || to.slice(0, 7) + '-01';
-      to = this.dateTo || to;
-    }
-    return { from, to };
-  },
-
-  // SECTION: renderTabContent — dispatches to tab-specific render methods; register new cases here
-  renderTabContent() {
-    const { from, to } = this.getDateRange();
-
-    switch (this.activeTab) {
-      case 'financial': return this.renderFinancial(from, to);
-      case 'stock': return this.renderStock();
-      case 'purchases': return this.renderPurchases(from, to);
-      case 'sales': return this.renderSalesReport(from, to);
-      case 'vehicles': return this.renderVehicles();
-      case 'consumption': return this.renderConsumption(from, to);
-      case 'audit': return this.renderAudit();
-      default: return '';
+  // SECTION: period presets → from/to
+  range() {
+    const d = new Date();
+    const fmt = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    const today = fmt(d);
+    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+    switch (this.preset) {
+      case 'today': return { from: today, to: today };
+      case 'yesterday': { const y = fmt(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1)); return { from: y, to: y }; }
+      case 'week': return { from: fmt(monday), to: today };
+      case 'lastMonth': return { from: fmt(new Date(d.getFullYear(), d.getMonth() - 1, 1)), to: fmt(new Date(d.getFullYear(), d.getMonth(), 0)) };
+      case 'year': return { from: `${d.getFullYear()}-01-01`, to: today };
+      case 'custom': return { from: this.from || today, to: this.to || today };
+      default: return { from: fmt(new Date(d.getFullYear(), d.getMonth(), 1)), to: today };
     }
   },
 
-  // SECTION: renderFinancial — revenue, expenses, profit, margin for date range; add charts or breakdowns here
-  renderFinancial(from, to) {
-    const sales = Store.get('sales').filter((s) => s.date >= from && s.date <= to);
-    const purchases = Store.get('purchases').filter((p) => p.purchaseDate >= from && p.purchaseDate <= to);
-    // SECTION: financial KPI calculations — sum revenue, expenses, profit, margin; change formulas here
-    const revenue = sales.reduce((s, p) => s + p.totalAmount, 0);
-    const expenses = purchases.reduce((s, p) => s + p.totalCost, 0);
-    const profit = revenue - expenses;
-
-    return `
-      <h3 class="text-headline-md mb-6">Financial Report (${Utils.formatDate(from)} - ${Utils.formatDate(to)})</h3>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="p-4 bg-surface-container-low rounded-lg"><span class="text-label-sm text-outline">REVENUE</span><div class="text-headline-md text-secondary mt-1">${Utils.formatCurrency(revenue)}</div></div>
-        <div class="p-4 bg-surface-container-low rounded-lg"><span class="text-label-sm text-outline">EXPENSES</span><div class="text-headline-md mt-1">${Utils.formatCurrency(expenses)}</div></div>
-        <div class="p-4 bg-surface-container-low rounded-lg"><span class="text-label-sm text-outline">PROFIT</span><div class="text-headline-md mt-1 ${profit >= 0 ? 'text-secondary' : 'text-error'}">${Utils.formatCurrency(profit)}</div></div>
-        <div class="p-4 bg-surface-container-low rounded-lg"><span class="text-label-sm text-outline">MARGIN</span><div class="text-headline-md mt-1">${revenue ? ((profit / revenue) * 100).toFixed(1) : 0}%</div></div>
-      </div>
-      <h4 class="text-label-sm text-outline mb-4">PROFIT ANALYSIS</h4>
-      <p class="text-body-md">Total sales transactions: ${sales.length} | Total purchase orders: ${purchases.length}</p>
-    `;
+  params() {
+    const def = this.catalogue?.find((r) => r.key === this.current);
+    const p = {};
+    if (def?.params.includes('range')) Object.assign(p, this.range());
+    if (def?.params.includes('groupBy')) p.groupBy = this.groupBy;
+    if (this.current === 'audit' && this.search) p.search = this.search;
+    return p;
   },
 
-  // SECTION: renderStock — inventory levels and stock value table; add low-stock summary here
-  renderStock() {
-    const fuelTypes = Store.get('fuelTypes');
-    const inventory = Store.get('inventory');
-    // SECTION: stock report rows — qty, capacity, status, value per fuel type; change valuation formula here
-    const rows = fuelTypes.map((ft) => {
-      const inv = inventory.find((i) => i.fuelTypeId === ft.id);
-      const qty = inv?.quantity || 0;
-      const val = qty * (inv?.purchasePrice || 0);
-      const status = Utils.stockStatus(qty, ft.capacity, ft.lowStockThreshold);
-      return `<tr>
-        <td>${Utils.escapeHtml(ft.name)}</td>
-        <td class="text-data-mono">${Utils.formatNumber(qty)} L</td>
-        <td class="text-data-mono">${Utils.formatNumber(ft.capacity)} L</td>
-        <td>${Utils.badge(status.label, status.type)}</td>
-        <td class="text-data-mono">${Utils.formatCurrency(val)}</td>
-      </tr>`;
-    });
-    return `
-      <h3 class="text-headline-md mb-6">Stock Report</h3>
-      ${Utils.renderDataTable(['Fuel Type', 'Quantity', 'Capacity', 'Status', 'Stock Value'], rows)}
-    `;
+  async load() {
+    try {
+      if (!this.catalogue) {
+        const res = await Api.get('/reports');
+        this.catalogue = res.reports;
+        this.canExport = res.canExport;
+        // deep link from elsewhere (e.g. dashboard "view all activity") via #reports?report=audit
+        const wanted = Router.hashParams?.get('report');
+        if (wanted && this.catalogue.some((r) => r.key === wanted)) {
+          this.current = wanted;
+          Router.hashParams = null;
+        }
+        if (!this.catalogue.some((r) => r.key === this.current)) this.current = this.catalogue[0]?.key ?? null;
+      }
+      if (this.current) {
+        this.loadingReport = true;
+        this.data = await Api.get(`/reports/${this.current}`, this.params());
+      }
+      this.error = null;
+    } catch (err) {
+      this.error = err.message;
+    }
+    this.loadingReport = false;
+    if (Router.currentPage === 'reports') Router.refresh();
   },
 
-  // SECTION: renderPurchases — purchase transactions in date range; add supplier grouping here
-  renderPurchases(from, to) {
-    const purchases = Store.get('purchases').filter((p) => p.purchaseDate >= from && p.purchaseDate <= to);
-    const rows = purchases.map((p) => `<tr>
-      <td>${p.purchaseNumber}</td><td>${Store.getSupplierName(p.supplierId)}</td>
-      <td>${Store.getFuelTypeName(p.fuelTypeId)}</td><td class="text-data-mono">${p.quantity} L</td>
-      <td class="text-data-mono">${Utils.formatCurrency(p.totalCost)}</td><td>${Utils.formatDate(p.purchaseDate)}</td>
-    </tr>`);
-    return `<h3 class="text-headline-md mb-6">Purchase Report</h3>
-      ${Utils.renderDataTable(['Purchase #', 'Supplier', 'Fuel', 'Qty', 'Total', 'Date'], rows, 'No purchases in range')}`;
-  },
-
-  // SECTION: renderSalesReport — sales transactions in date range; add fuel-type breakdown here
-  renderSalesReport(from, to) {
-    const sales = Store.get('sales').filter((s) => s.date >= from && s.date <= to);
-    const rows = sales.map((s) => `<tr>
-      <td>${s.saleNumber}</td><td>${Store.getFuelTypeName(s.fuelTypeId)}</td>
-      <td class="text-data-mono">${s.quantity} L</td><td class="text-data-mono">${Utils.formatCurrency(s.totalAmount)}</td>
-      <td>${Store.getUserName(s.attendantId)}</td><td>${Utils.formatDate(s.date)}</td>
-    </tr>`);
-    return `<h3 class="text-headline-md mb-6">Sales Report</h3>
-      ${Utils.renderDataTable(['Sale #', 'Fuel', 'Qty', 'Total', 'Attendant', 'Date'], rows, 'No sales in range')}`;
-  },
-
-  // SECTION: renderVehicles — fleet usage with total fuel per vehicle; add efficiency column here
-  renderVehicles() {
-    const vehicles = Store.get('vehicles');
-    const rows = vehicles.map((v) => {
-      const fuel = Store.get('consumption').filter((c) => c.vehicleId === v.id).reduce((s, c) => s + c.quantity, 0);
-      return `<tr>
-        <td>${v.registrationNumber}</td><td>${v.name}</td><td>${v.type}</td>
-        <td>${v.driver}</td><td>${Utils.badge(v.status === 'active' ? 'Active' : 'Maintenance', v.status === 'active' ? 'success' : 'warning')}</td>
-        <td class="text-data-mono">${Utils.formatNumber(fuel)} L</td>
-      </tr>`;
-    });
-    return `<h3 class="text-headline-md mb-6">Vehicle Usage Report</h3>
-      ${Utils.renderDataTable(['Registration', 'Name', 'Type', 'Driver', 'Status', 'Total Fuel'], rows)}`;
-  },
-
-  // SECTION: renderConsumption — fuel issued to vehicles in date range; add department filter here
-  renderConsumption(from, to) {
-    const records = Store.get('consumption').filter((c) => c.date >= from && c.date <= to);
-    const rows = records.map((c) => `<tr>
-      <td>${Store.getVehicleName(c.vehicleId)}</td><td>${c.driver}</td>
-      <td>${Store.getFuelTypeName(c.fuelTypeId)}</td><td class="text-data-mono">${c.quantity} L</td>
-      <td class="text-data-mono">${c.mileage} L/km</td><td>${Utils.formatDate(c.date)}</td>
-    </tr>`);
-    return `<h3 class="text-headline-md mb-6">Fuel Consumption Report</h3>
-      ${Utils.renderDataTable(['Vehicle', 'Driver', 'Fuel', 'Qty', 'Efficiency', 'Date'], rows, 'No records in range')}`;
-  },
-
-  // SECTION: renderAudit — full audit log table newest first; add user or action filters here
-  renderAudit() {
-    const logs = Store.get('auditLogs').sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-    const rows = logs.map((l) => `<tr>
-      <td>${Utils.formatDateTime(l.timestamp)}</td>
-      <td>${Store.getUserName(l.userId)}</td>
-      <td>${Utils.escapeHtml(l.action)}</td>
-      <td>${Utils.escapeHtml(l.details)}</td>
-    </tr>`);
-    return `<h3 class="text-headline-md mb-6">Audit Logs</h3>
-      ${Utils.renderDataTable(['Timestamp', 'User', 'Action', 'Details'], rows)}`;
-  },
-
-  // SECTION: afterRender — binds period and custom date inputs; toggle custom fields visibility here
-  afterRender() {
-    document.getElementById('rep-period')?.addEventListener('change', (e) => {
-      this.period = e.target.value;
-      Router.refresh();
-    });
-    document.getElementById('rep-from')?.addEventListener('change', (e) => { this.dateFrom = e.target.value; Router.refresh(); });
-    document.getElementById('rep-to')?.addEventListener('change', (e) => { this.dateTo = e.target.value; Router.refresh(); });
-  },
-
-  // SECTION: switchTab — changes active report tab and refreshes; persist tab in URL if needed
-  switchTab(tab) {
-    this.activeTab = tab;
+  rerun() {
+    this.data = null;
+    this.error = null;
     Router.refresh();
   },
 
-  // SECTION: exportCurrent — CSV export for financial and stock tabs only; implement exports for other tabs here
-  exportCurrent() {
-    const { from, to } = this.getDateRange();
-    let headers, rows, filename;
+  select(key) {
+    this.current = key;
+    this.rerun();
+  },
 
-    switch (this.activeTab) {
-      case 'financial':
-        filename = 'financial-report.csv';
-        headers = ['Metric', 'Value'];
-        const sales = Store.get('sales').filter((s) => s.date >= from && s.date <= to);
-        const purchases = Store.get('purchases').filter((p) => p.purchaseDate >= from && p.purchaseDate <= to);
-        const rev = sales.reduce((s, p) => s + p.totalAmount, 0);
-        const exp = purchases.reduce((s, p) => s + p.totalCost, 0);
-        rows = [['Revenue', rev], ['Expenses', exp], ['Profit', rev - exp]];
-        break;
-      case 'stock':
-        filename = 'stock-report.csv';
-        headers = ['Fuel Type', 'Quantity', 'Capacity', 'Value'];
-        rows = Store.get('fuelTypes').map((ft) => {
-          const inv = Store.getInventoryByFuelType(ft.id);
-          return [ft.name, inv?.quantity || 0, ft.capacity, (inv?.quantity || 0) * (inv?.purchasePrice || 0)];
-        });
-        break;
-      default:
-        Utils.toast('Export for this tab uses CSV from list view', 'info');
-        return;
+  setPreset(p) {
+    this.preset = p;
+    this.rerun();
+  },
+
+  applyCustom() {
+    this.from = document.getElementById('rep-from').value;
+    this.to = document.getElementById('rep-to').value;
+    if (!this.from || !this.to || this.from > this.to) return Utils.toast('Choose a valid date range', 'error');
+    this.setPreset('custom');
+  },
+
+  // SECTION: cell formatting by column type
+  fmt(value, type) {
+    if (value === null || value === undefined || value === '') return '<span class="text-outline">—</span>';
+    switch (type) {
+      case 'money': return Utils.formatCurrency(value);
+      case 'liters': return `${Utils.formatNumber(value, Number(value) % 1 ? 1 : 0)} L`;
+      case 'percent': return `${Number(value).toFixed(1)}%`;
+      case 'number': return Utils.formatNumber(value, Number(value) % 1 ? 2 : 0);
+      default: return Utils.escapeHtml(value);
     }
-    Utils.exportCSV(filename, headers, rows);
+  },
+
+  render() {
+    const header = `
+      <div class="page-header">
+        <div>
+          <h2 class="text-headline-lg font-headline-lg">Reports</h2>
+          <p class="text-body-md text-outline mt-1">Sales, stock, customers, finance and staff — export to Excel or print to PDF</p>
+        </div>
+      </div>`;
+    if (this.error && !this.catalogue) return header + Utils.errorState(this.error, 'ReportsPage.onEnter(); Router.refresh()');
+    if (!this.catalogue) return header + Utils.loadingState('Loading reports...');
+    if (!this.catalogue.length) return header + '<div class="page-section text-outline">No reports are available for your role.</div>';
+
+    const def = this.catalogue.find((r) => r.key === this.current);
+    const groups = {};
+    this.catalogue.forEach((r) => (groups[r.category] ||= []).push(r));
+    const nav = `
+      <div class="lg:hidden mb-4">
+        <select class="form-select" onchange="ReportsPage.select(this.value)">
+          ${Object.entries(groups).map(([g, list]) => `<optgroup label="${Utils.escapeHtml(g)}">${list.map((r) => `<option value="${r.key}" ${r.key === this.current ? 'selected' : ''}>${Utils.escapeHtml(r.title)}</option>`).join('')}</optgroup>`).join('')}
+        </select>
+      </div>
+      <aside class="hidden lg:block w-60 shrink-0 space-y-4">
+        ${Object.entries(groups).map(([g, list]) => `
+          <div><p class="text-label-sm text-outline mb-1 px-2">${Utils.escapeHtml(g.toUpperCase())}</p>
+          ${list.map((r) => `<button onclick="ReportsPage.select('${r.key}')" class="w-full text-left px-3 py-2 rounded-lg text-sm ${r.key === this.current ? 'bg-primary text-on-primary font-semibold' : 'hover:bg-surface-container-low'}">${Utils.escapeHtml(r.title)}</button>`).join('')}</div>`).join('')}
+      </aside>`;
+
+    const r = this.range();
+    const controls = `
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        ${def.params.includes('range') ? `
+          ${[['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This Week'], ['month', 'This Month'], ['lastMonth', 'Last Month'], ['year', 'This Year'], ['custom', 'Custom']].map(([k, l]) => `
+            <button onclick="ReportsPage.setPreset('${k}')" class="px-3 py-1.5 text-label-sm rounded-full ${this.preset === k ? 'bg-primary text-on-primary' : 'border border-outline-variant hover:bg-surface-container-low'}">${l}</button>`).join('')}
+          ${this.preset === 'custom' ? `<input id="rep-from" type="date" class="form-input w-auto py-1" value="${r.from}"/><span class="text-outline">to</span><input id="rep-to" type="date" class="form-input w-auto py-1" value="${r.to}"/>
+            <button onclick="ReportsPage.applyCustom()" class="px-3 py-1.5 bg-secondary text-on-secondary rounded-lg text-label-sm font-semibold">Apply</button>` : ''}` : '<span class="text-sm text-outline">Current balances (no date range)</span>'}
+        ${def.params.includes('groupBy') ? `<select class="form-select w-auto py-1" onchange="ReportsPage.groupBy = this.value; ReportsPage.rerun()">
+          ${[['day', 'Daily'], ['week', 'Weekly'], ['month', 'Monthly'], ['year', 'Annual']].map(([k, l]) => `<option value="${k}" ${this.groupBy === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+        ${this.current === 'audit' ? `<input id="rep-search" type="search" placeholder="Search action or details, Enter" class="form-input w-auto py-1" value="${Utils.escapeHtml(this.search)}"/>` : ''}
+        <div class="flex gap-2 ml-auto">
+          ${this.canExport ? `
+            <button onclick="ReportsPage.download('xlsx')" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm hover:bg-surface-container-low flex items-center gap-1"><span class="material-symbols-outlined text-base">table_view</span> Excel</button>
+            <button onclick="ReportsPage.download('csv')" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm hover:bg-surface-container-low">CSV</button>` : ''}
+          <button onclick="ReportsPage.print()" class="px-3 py-1.5 border border-outline-variant rounded-lg text-sm hover:bg-surface-container-low flex items-center gap-1"><span class="material-symbols-outlined text-base">print</span> Print / PDF</button>
+        </div>
+      </div>`;
+
+    let body;
+    if (this.error) body = Utils.errorState(this.error, 'ReportsPage.rerun()');
+    else if (!this.data) body = Utils.loadingState('Running report...');
+    else body = this.renderResult(this.data);
+
+    return header + `<div class="flex flex-col lg:flex-row gap-6">${nav}<div class="flex-1 min-w-0">${controls}${body}</div></div>`;
+  },
+
+  renderResult(d) {
+    const summary = d.summary?.length ? `<div class="grid grid-cols-2 md:grid-cols-${Math.min(5, d.summary.length)} gap-3 mb-4">${d.summary.map((s) => `
+      <div class="page-section !p-3"><p class="text-label-sm text-outline">${Utils.escapeHtml(s.label.toUpperCase())}</p><p class="font-semibold text-data-mono">${this.fmt(s.value, s.type)}</p></div>`).join('')}</div>` : '';
+    const chart = d.chart && d.rows.length > 1 ? this.renderChart(d) : '';
+    const head = d.columns.map((c) => `<th class="${['money', 'liters', 'number', 'percent'].includes(c.type) ? 'text-right' : ''}">${Utils.escapeHtml(c.label)}</th>`).join('');
+    const rows = d.rows.map((row) => `<tr class="${row.bold ? 'font-semibold' : ''}">${d.columns.map((c) => `<td class="${['money', 'liters', 'number', 'percent'].includes(c.type) ? 'text-right text-data-mono whitespace-nowrap' : ''}">${this.fmt(row[c.key], c.type)}</td>`).join('')}</tr>`).join('');
+    const totals = d.totals ? `<tr class="font-semibold border-t-2 border-outline-variant">${d.columns.map((c, i) => `<td class="${['money', 'liters', 'number', 'percent'].includes(c.type) ? 'text-right text-data-mono whitespace-nowrap' : ''}">${i === 0 && d.totals[c.key] === undefined ? 'Total' : d.totals[c.key] !== undefined ? this.fmt(d.totals[c.key], c.type) : ''}</td>`).join('')}</tr>` : '';
+    return `
+      <div class="flex flex-wrap justify-between items-baseline gap-2 mb-3">
+        <h3 class="text-headline-md font-headline-md">${Utils.escapeHtml(d.title)}</h3>
+        <span class="text-label-sm text-outline">${d.meta.from ? `${Utils.formatDate(d.meta.from)} – ${Utils.formatDate(d.meta.to)} · ` : ''}${Utils.escapeHtml(d.meta.station)} · ${d.rows.length} row(s)</span>
+      </div>
+      ${summary}${chart}
+      <div class="page-section !p-0 overflow-x-auto">
+        ${d.rows.length ? `<table class="data-table w-full text-sm"><thead><tr>${head}</tr></thead><tbody>${rows}${totals}</tbody></table>` : '<p class="p-8 text-center text-outline">No data for this period</p>'}
+      </div>
+      ${d.note ? `<p class="text-xs text-outline mt-2">${Utils.escapeHtml(d.note)}</p>` : ''}`;
+  },
+
+  // SECTION: simple bar chart for reports that declare one
+  renderChart(d) {
+    const { x, y, label } = d.chart;
+    const rows = d.rows.slice(0, 31);
+    const max = Math.max(...rows.map((r) => Number(r[y]) || 0), 1);
+    const col = d.columns.find((c) => c.key === y);
+    return `<div class="page-section mb-4">
+      <p class="text-label-sm text-outline mb-3">${Utils.escapeHtml(label.toUpperCase())}${d.rows.length > 31 ? ' (first 31)' : ''}</p>
+      <div class="h-40 flex items-end gap-1">
+        ${rows.map((r) => `<div class="flex-1 h-full flex flex-col justify-end items-center min-w-0" title="${Utils.escapeHtml(String(r[x]))}: ${this.fmt(r[y], col?.type).replace(/<[^>]+>/g, '')}">
+          <div class="w-full bg-secondary/70 hover:bg-secondary rounded-t-sm" style="height:${Math.max(1, ((Number(r[y]) || 0) / max) * 100)}%"></div>
+          <span class="text-[9px] text-outline mt-1 truncate w-full text-center">${Utils.escapeHtml(String(r[x]).slice(-5))}</span></div>`).join('')}
+      </div></div>`;
+  },
+
+  afterRender() {
+    if ((!this.catalogue || (this.current && !this.data)) && !this.error && !this.loadingReport) this.load();
+    document.getElementById('rep-search')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.search = e.target.value.trim();
+        this.rerun();
+      }
+    });
+  },
+
+  // SECTION: Excel/CSV download — fetched (so errors show as toasts) then saved as a file
+  async download(format) {
+    const qs = new URLSearchParams({ ...this.params(), format }).toString();
+    try {
+      const res = await fetch(`/api/reports/${this.current}?${qs}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'fuelflow' } });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Export failed (${res.status})`);
+      }
+      const name = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1] || `${this.current}.${format}`;
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      Utils.toast(`${format === 'xlsx' ? 'Excel' : 'CSV'} file downloaded`, 'success');
+    } catch (err) {
+      Utils.toast(err.message, 'error');
+    }
+  },
+
+  // SECTION: print → the browser's "Save as PDF" gives the PDF export
+  print() {
+    const d = this.data;
+    if (!d) return;
+    const num = (t) => ['money', 'liters', 'number', 'percent'].includes(t);
+    const cell = (v, t) => this.fmt(v, t).replace('<span class="text-outline">—</span>', '—');
+    Billing.print(Billing.docShell(d.title, `
+      <div class="head">${Billing.brandBlock()}<div class="right"><h2>${Utils.escapeHtml(d.title.toUpperCase())}</h2>
+        <div class="muted">${d.meta.from ? `${Utils.formatDate(d.meta.from)} – ${Utils.formatDate(d.meta.to)}` : `As of ${Utils.formatDate(d.meta.generatedAt)}`}</div>
+        <div class="muted">${Utils.escapeHtml(d.meta.station)}</div></div></div>
+      ${d.summary?.length ? `<p>${d.summary.map((s) => `<strong>${Utils.escapeHtml(s.label)}:</strong> ${cell(s.value, s.type)}`).join(' &nbsp;·&nbsp; ')}</p>` : ''}
+      <table><thead><tr>${d.columns.map((c) => `<th class="${num(c.type) ? 'num' : ''}">${Utils.escapeHtml(c.label)}</th>`).join('')}</tr></thead><tbody>
+        ${d.rows.map((r) => `<tr${r.bold ? ' style="font-weight:700"' : ''}>${d.columns.map((c) => `<td class="${num(c.type) ? 'num' : ''}">${cell(r[c.key], c.type)}</td>`).join('')}</tr>`).join('')}
+        ${d.totals ? `<tr style="font-weight:700">${d.columns.map((c, i) => `<td class="${num(c.type) ? 'num' : ''}">${i === 0 && d.totals[c.key] === undefined ? 'Total' : d.totals[c.key] !== undefined ? cell(d.totals[c.key], c.type) : ''}</td>`).join('')}</tr>` : ''}
+      </tbody></table>
+      ${d.note ? `<p class="muted">${Utils.escapeHtml(d.note)}</p>` : ''}
+      <p class="muted">Generated ${new Date(d.meta.generatedAt).toLocaleString()} by ${Utils.escapeHtml(d.meta.generatedBy)}</p>`));
   },
 };

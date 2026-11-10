@@ -1,61 +1,62 @@
 /**
- * FuelFlow ERP - Authentication
+ * FuelFlow ERP - Authentication (server sessions)
  */
 const Auth = {
-  // SECTION: localStorage key for the active user session; change if renaming session storage
-  SESSION_KEY: 'fuelflow_session',
+  // SECTION: in-memory copy of the signed-in user from GET /api/auth/me; the httpOnly cookie is the real session
+  _session: null,
 
-  // SECTION: validates credentials against Store users and creates a session; change lookup rules or session fields here
-  login(email, password) {
-    // SECTION: load users and find matching active account; change match criteria (e.g. case-insensitive email) here
-    const users = Store.get('users');
-    const user = users.find((u) => u.email === email && u.password === password && u.status === 'active');
-    if (!user) return { success: false, message: 'Invalid email or password' };
-
-    // SECTION: build session payload and persist to localStorage; add or remove session properties here
-    const session = {
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      loginAt: new Date().toISOString(),
-    };
-    localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-    Store.addAuditLog(user.id, 'Login', `${user.name} logged in as ${this.roleLabel(user.role)}`);
-    return { success: true, user: session };
+  // SECTION: role keys → display labels; the server's roleName is preferred when available
+  ROLE_LABELS: {
+    super_admin: 'Super Administrator',
+    station_manager: 'Station Manager',
+    cashier: 'Cashier',
+    attendant: 'Fuel Attendant',
+    accountant: 'Accountant',
+    customer: 'Customer',
   },
 
-  // SECTION: demo quick-login by role using seeded credentials; update accounts map when demo users change
-  loginAsRole(role) {
-    const accounts = {
-      admin: { email: 'admin@fuelflow.com', password: 'admin123' },
-      attendant: { email: 'attendant@fuelflow.com', password: 'attendant123' },
-      fleet_manager: { email: 'fleet@fuelflow.com', password: 'fleet123' },
-    };
-    const creds = accounts[role];
-    if (!creds) return { success: false, message: 'Unknown role' };
-    return this.login(creds.email, creds.password);
-  },
-
-  // SECTION: clears session, logs audit entry, and redirects to login; change redirect target or audit action here
-  logout() {
-    const session = this.getSession();
-    if (session) {
-      Store.addAuditLog(session.userId, 'Logout', `${session.name} logged out`);
+  // SECTION: loads the current user from the server; returns null when not signed in
+  async load() {
+    try {
+      const { user } = await Api.get('/auth/me');
+      this._session = user;
+    } catch (err) {
+      this._session = null;
+      if (err.status !== 401) throw err;
     }
-    localStorage.removeItem(this.SESSION_KEY);
-    window.location.href = 'index.html';
+    return this._session;
   },
 
-  // SECTION: reads and parses session from localStorage; returns null when not logged in
+  // SECTION: signs in via the API; returns { success, user | message } like the original Store-based login
+  async login(email, password) {
+    try {
+      const { user } = await Api.post('/auth/login', { email, password });
+      this._session = user;
+      return { success: true, user };
+    } catch (err) {
+      return { success: false, message: err.fullMessage || err.message };
+    }
+  },
+
+  // SECTION: ends the server session; pass redirect=false to stay on the current page
+  async logout(redirect = true) {
+    try {
+      await Api.post('/auth/logout');
+    } catch {
+      // already signed out or offline — clear locally either way
+    }
+    this._session = null;
+    if (redirect) window.location.href = 'index.html';
+  },
+
+  // SECTION: synchronous accessor used by pages after App.init has loaded the session
   getSession() {
-    const raw = localStorage.getItem(this.SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return this._session;
   },
 
-  // SECTION: guards protected pages by redirecting unauthenticated users; change redirect URL if login page moves
-  requireAuth() {
-    const session = this.getSession();
+  // SECTION: guards protected pages; resolves to the session or redirects to login
+  async requireAuth() {
+    const session = await this.load();
     if (!session) {
       window.location.href = 'index.html';
       return null;
@@ -63,15 +64,24 @@ const Auth = {
     return session;
   },
 
-  // SECTION: checks whether current session has admin role; adjust role name if roles change
-  isAdmin() {
-    return this.getSession()?.role === 'admin';
+  // SECTION: permission checks — true when the user holds any of the given permission keys
+  can(...keys) {
+    const perms = this._session?.permissions || [];
+    return keys.some((k) => perms.includes(k));
   },
 
-  // SECTION: maps internal role keys to display labels; add new roles and labels here
+  isAdmin() {
+    return this._session?.role === 'super_admin';
+  },
+
   roleLabel(role) {
-    const labels = { admin: 'Administrator', attendant: 'Fuel Attendant', fleet_manager: 'Fleet Manager' };
-    return labels[role] || role;
+    if (this._session?.role === role && this._session.roleName) return this._session.roleName;
+    return this.ROLE_LABELS[role] || role;
+  },
+
+  // SECTION: patches the cached session after profile changes (e.g. avatar)
+  updateSession(patch) {
+    if (this._session) Object.assign(this._session, patch);
   },
 };
 
