@@ -5,6 +5,8 @@ const Api = {
   // SECTION: base path of the backend API; same origin so the session cookie is sent automatically
   BASE: '/api',
 
+  NOT_SERVED_BY_BACKEND: 'This page is not connected to the FuelFlow server. Start it (cd backend, then npm run dev) and open http://localhost:4000 — not Live Server or the HTML file directly.',
+
   // SECTION: core request — JSON in/out, CSRF header, normalized errors; redirects to login on 401
   async request(method, path, body) {
     const opts = {
@@ -17,6 +19,11 @@ const Api = {
       opts.body = JSON.stringify(body);
     }
 
+    // SECTION: opened as a file (file://) — there is no server to talk to
+    if (window.location.protocol === 'file:') {
+      throw new ApiError(0, 'NO_SERVER', this.NOT_SERVED_BY_BACKEND);
+    }
+
     let res;
     try {
       res = await fetch(this.BASE + path, opts);
@@ -26,6 +33,10 @@ const Api = {
 
     const data = res.status === 204 ? null : await res.json().catch(() => null);
     if (!res.ok) {
+      // a non-JSON 404/405/501 means the page is served by a plain file server (e.g. VS Code Live Server), not the FuelFlow backend
+      if (!data && [404, 405, 501].includes(res.status)) {
+        throw new ApiError(res.status, 'NO_BACKEND', this.NOT_SERVED_BY_BACKEND);
+      }
       const err = data?.error || {};
       // SECTION: session expired — send the user back to sign in (except on the login call itself)
       if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/me')) {
